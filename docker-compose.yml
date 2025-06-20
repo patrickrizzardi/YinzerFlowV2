@@ -1,0 +1,37 @@
+services:
+  api:
+    user: bun
+    image: oven/bun:latest
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /home/patrick/.npmrc:/home/node/.npmrc
+    ports:
+      - "5000:5000"
+    command: sh -c "bun install && bun start:dev"
+    tty: true
+    stdin_open: true
+    networks:
+      - yinzerflow-network
+
+  node:
+    user: node
+    image: node:latest
+    restart: no
+    working_dir: /usr/src/app
+    volumes:
+      - ./:/usr/src/app
+      - /home/patrick/.npmrc:/home/node/.npmrc
+
+  benchmark:
+    image: williamyeh/wrk
+    restart: no
+    command: ["-t20", "-c400", "-d10s", "http://api:5000/status"]
+    depends_on:
+      - api
+    networks:
+      - yinzerflow-network
+
+networks:
+  yinzerflow-network:
+    driver: bridge
