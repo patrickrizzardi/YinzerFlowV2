@@ -1,12 +1,29 @@
-import { httpMethod, httpStatus, httpStatusCode } from 'constants/http.ts';
-import { RouteRegistry } from 'core/setup/RouteRegistry.ts';
-import type { THttpMethod } from 'typedefs/constants/http.ts';
-import type { IContext, TResponseBody, TResponseFunction } from 'typedefs/core/Context.typedefs.ts';
-import type { IHookOptions, IHookRegistry, TAfterHookResponse, TBeforeHookResponse } from 'typedefs/core/Hook.typedefs.ts';
-import type { IRoute, IRouteRegistry } from 'typedefs/core/Route.typedefs.ts';
-import type { IGroup, ISetup } from 'typedefs/core/Setup.typedefs.ts';
+import ip from 'ip';
+import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
+import type { THttpMethod } from '@typedefs/constants/http.ts';
+import { RouteRegistry } from '@core/setup/RouteRegistry.ts';
+import type { IContext, TResponseBody, TResponseFunction } from '@typedefs/core/Context.js';
+import type { IHookOptions, IHookRegistry, TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/Hook.js';
+import type { IRoute, IRouteRegistry } from '@typedefs/core/Route.js';
+import type { IGroup, ISetup } from '@typedefs/core/Setup.js';
+import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
+import { handleCustomConfiguration } from '@core/handleCustomConfiguration.ts';
+import { bodyParser } from '@constants/configuration.ts';
 
 export class Setup implements ISetup {
+  private readonly configuration: IServerConfiguration = {
+    port: 3000,
+    host: ip.address(),
+    bodyParser: bodyParser.json,
+    networkLogs: false,
+    proxyHops: 0,
+    connectionOptions: {
+      socketTimeout: 30000,
+      gracefulShutdownTimeout: 30000,
+      keepAliveTimeout: 65000,
+      headersTimeout: 66000,
+    },
+  };
   private readonly routeRegistry = new RouteRegistry();
   private readonly hooks: IHookRegistry = {
     beforeAll: new Set(),
@@ -21,6 +38,10 @@ export class Setup implements ISetup {
       };
     },
   };
+
+  constructor(configuration?: IServerConfiguration) {
+    this.configuration = handleCustomConfiguration(configuration);
+  }
 
   //   ===== Route Registration =====
   get(path: string, handler: IRoute['handler'], options?: IRoute['options']): void {
@@ -93,11 +114,16 @@ export class Setup implements ISetup {
     this.hooks.onError = handler;
   }
 
+  //   ===== Getters =====
   getRouteRegistry(): IRouteRegistry {
     return this.routeRegistry;
   }
 
   getHooks(): IHookRegistry {
     return this.hooks;
+  }
+
+  getConfiguration(): IServerConfiguration {
+    return this.configuration;
   }
 }

@@ -1,7 +1,7 @@
 services:
   api:
     user: bun
-    image: oven/bun:latest
+    image: oven/bun:1.2.17
     working_dir: /app
     volumes:
       - .:/app

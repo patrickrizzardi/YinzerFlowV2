@@ -2,6 +2,17 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import dts from 'bun-plugin-dts';
 
+// Check for dead packages
+console.log('Checking for dead packages...');
+try {
+  execSync('bun run find-unused-packages', { stdio: 'inherit' });
+  console.log('No dead packages found.');
+} catch (_) {
+  // We don't need to log the error because the files will be logged in the find-unused-packages command
+  console.error('Error checking for dead packages.');
+  process.exit(1);
+}
+
 // Clean the output directory
 console.log('Cleaning output directory...');
 try {
@@ -51,7 +62,7 @@ try {
 console.log('Building Constants...');
 try {
   await Bun.build({
-    entrypoints: ['./app/constants/index.ts'],
+    entrypoints: ['./app/@constants/index.ts'],
     outdir: './lib/constants',
     target: 'node',
     minify: true,
@@ -88,10 +99,10 @@ try {
 
     // Fix import paths to use package path - handle different import formats
     content = content
-      .replace(/from\s*['"]constants\/(?<file>[^'"]+)(?:\.ts)?['"]/g, () => `from "yinzerflow/constants/index.js"`)
+      .replace(/from\s*['"]constants\/(?<file>[^'"]+)(?:\.ts)?['"]/g, () => `from "yinzerflow/@constants/index.js"`)
       .replace(
         /import\s*{(?<imports>[^}]+)}\s*from\s*['"]constants\/(?<file>[^'"]+)(?:\.ts)?['"]/g,
-        (_match, imports) => `import {${imports}} from "yinzerflow/constants/index.js"`,
+        (_match, imports) => `import {${imports}} from "yinzerflow/@constants/index.js"`,
       );
 
     writer.write(content);

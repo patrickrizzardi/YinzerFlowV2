@@ -1,4 +1,4 @@
-import type { TResponseFunction, TUndefinableResponseFunction } from 'typedefs/core/Context.typedefs.ts';
+import type { TResponseFunction, TUndefinableResponseFunction } from '@typedefs/core/Context.js';
 
 export type TBeforeHookResponse = TResponseFunction | TUndefinableResponseFunction;
 export type TAfterHookResponse = TResponseFunction;

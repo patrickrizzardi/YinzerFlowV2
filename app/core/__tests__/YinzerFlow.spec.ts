@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { YinzerFlow } from 'core/YinzerFlow.ts';
+import { YinzerFlow } from '@core/YinzerFlow.ts';
 
 describe('YinzerFlow', () => {
   it('should listen to the server', async () => {

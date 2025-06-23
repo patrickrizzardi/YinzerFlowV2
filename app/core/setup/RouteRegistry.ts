@@ -1,5 +1,5 @@
-import type { THttpMethod } from 'typedefs/constants/http.ts';
-import type { IRoute, IRouteRegistry } from 'typedefs/core/Route.typedefs.ts';
+import type { THttpMethod } from '@typedefs/constants/http.ts';
+import type { IRoute, IRouteRegistry } from '@typedefs/core/Route.js';
 
 export class RouteRegistry implements IRouteRegistry {
   private readonly routes = new Map<THttpMethod, Map<string, IRoute>>();

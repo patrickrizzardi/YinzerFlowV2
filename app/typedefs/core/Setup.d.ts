@@ -1,6 +1,6 @@
-import type { THttpMethod } from 'typedefs/constants/http.ts';
-import type { IHookOptions, TAfterHookResponse, TBeforeHookResponse } from 'typedefs/core/Hook.typedefs.ts';
-import type { IRoute } from 'typedefs/core/Route.typedefs.ts';
+import type { THttpMethod } from '@typedefs/constants/http.ts';
+import type { IHookOptions, TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/Hook.js';
+import type { IRoute } from '@typedefs/core/Route.js';
 
 export type TSetupRouteRegistration = (path: string, handler: IRoute['handler'], options?: IRoute['options']) => void;
 export type IGroup = Record<Lowercase<THttpMethod>, TSetupRouteRegistration>;

@@ -1,16 +1,13 @@
-
 import { createServer } from 'net';
-import type { Socket } from 'net';
-import type { IServerConfiguration, IYinzerFlow } from 'typedefs/core/YinzerFlow.typedefs.ts';
-import { handleCustomConfiguration } from 'core/handleCustomConfiguration.ts';
-import type { IContext } from 'typedefs/core/Context.typedefs.ts';
+import type { IYinzerFlow } from '@typedefs/core/YinzerFlow.js';
 
-import { Setup } from 'core/setup/Setup.ts';
+import type { IContext } from '@typedefs/core/Context.js';
+
+import { Setup } from '@core/setup/Setup.ts';
 
 export class YinzerFlow extends Setup implements IYinzerFlow {
   private isListening = false;
   private server?: ReturnType<typeof createServer>;
-  private readonly configuration: IServerConfiguration;
 
   private readonly context: IContext = {
     request: {
@@ -30,11 +27,6 @@ export class YinzerFlow extends Setup implements IYinzerFlow {
       body: undefined,
     },
   };
-
-  constructor(configuration?: IServerConfiguration) {
-    super();
-    this.configuration = handleCustomConfiguration(configuration);
-  }
 
   /**
    * Server Lifecycle
@@ -62,7 +54,7 @@ export class YinzerFlow extends Setup implements IYinzerFlow {
         });
       });
 
-      this.server.listen(this.configuration.port, this.configuration.host);
+      this.server.listen(this.getConfiguration().port, this.getConfiguration().host);
     });
   }
 

@@ -1,9 +1,23 @@
 import { describe, expect, it } from 'bun:test';
-import { httpMethod, httpStatus, httpStatusCode } from 'constants/http.ts';
-import { Setup } from 'core/setup/Setup.ts';
-import type { IContext } from 'typedefs/core/Context.typedefs.ts';
+import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
+import { Setup } from '@core/setup/Setup.ts';
+import type { IContext } from '@typedefs/core/Context.js';
 
-describe('RouteRegistry', () => {
+describe('Setup', () => {
+  it('should have a default configuration', () => {
+    const setup = new Setup();
+    expect(setup.getConfiguration()).toBeDefined();
+  });
+
+  it('should override the default configuration keeping default values that are not provided', () => {
+    const setup = new Setup({
+      port: 3001,
+      proxyHops: 1,
+    });
+    expect(setup.getConfiguration().port).toBe(3001);
+    expect(setup.getConfiguration().proxyHops).toBe(1);
+  });
+
   it('should register routes of each http method', () => {
     const setup = new Setup();
     setup.get('/', () => {}, { beforeHooks: [() => {}], afterHooks: [() => {}] });

@@ -23,13 +23,10 @@
     "verbatimModuleSyntax": true,
     "baseUrl": ".",
     "paths": {
-      "utils/*": ["./app/utils/*"],
-      "config/*": ["./app/config/*"],
-      "example/*": ["./example/*"],
-      "local/*": ["./local/*"],
-      "core/*": ["./app/core/*"],
-      "constants/*": ["./app/constants/*"],
-      "typedefs/*": ["./app/typedefs/*"]
+      "@example/*": ["./example/*"],
+      "@core/*": ["./app/core/*"],
+      "@constants/*": ["./app/constants/*"],
+      "@typedefs/*": ["./app/typedefs/*"]
     },
     "sourceMap": false,
     "removeComments": true,
@@ -56,5 +53,5 @@
     "noUncheckedIndexedAccess": true,
     "strictBindCallApply": true
   },
-  "include": ["app/**/*", "example/**/*", "local/**/*", "build.ts"]
+  "include": ["app/**/*", "example/**/*",  "build.ts"]
 }

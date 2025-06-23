@@ -1,4 +1,4 @@
-import type { TBodyParser } from 'typedefs/constants/configuration.ts';
+import type { TBodyParser } from '@typedefs/configuration.ts';
 
 export interface IYinzerFlow {
   /**

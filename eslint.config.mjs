@@ -3,7 +3,6 @@
 import globals from 'globals';
 import { fixupPluginRules } from '@eslint/compat';
 import { configs, parser, plugin } from 'typescript-eslint';
-import eslint from '@eslint/js';
 import _import from 'eslint-plugin-import';
 import path from 'path';
 import { fileURLToPath } from 'url';

@@ -1,6 +1,6 @@
 import ip from 'ip';
-import { bodyParser } from 'constants/configuration.ts';
-import type { IServerConfiguration } from 'typedefs/core/YinzerFlow.typedefs.ts';
+import { bodyParser } from '@constants/configuration.ts';
+import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
 
 export const handleCustomConfiguration = (configuration?: IServerConfiguration): IServerConfiguration => {
   const defaultConfiguration: IServerConfiguration = {

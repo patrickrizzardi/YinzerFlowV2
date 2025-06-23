@@ -1,5 +1,5 @@
-import type { CreateEnum } from 'typedefs/generic.typedefs.ts';
-import type { contentType, httpHeaders, httpMethod, httpStatus, httpStatusCode } from 'constants/http.ts';
+import type { contentType, httpHeaders, httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
+import type { CreateEnum } from '@typedefs/generic.js';
 
 export type THttpStatus = CreateEnum<typeof httpStatus>;
 export type THttpStatusCode = CreateEnum<typeof httpStatusCode>;

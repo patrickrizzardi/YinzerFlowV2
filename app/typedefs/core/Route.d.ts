@@ -1,6 +1,6 @@
-import type { THttpMethod } from 'typedefs/constants/http.ts';
-import type { TResponseFunction } from 'typedefs/core/Context.typedefs.ts';
-import type { TAfterHookResponse, TBeforeHookResponse } from 'typedefs/core/Hook.typedefs.ts';
+import type { THttpMethod } from '@typedefs/http.ts';
+import type { TResponseFunction } from '@typedefs/core/Context.js';
+import type { TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/Hook.js';
 
 export interface IRouteRegistry {
   register: (route: IRoute) => void;

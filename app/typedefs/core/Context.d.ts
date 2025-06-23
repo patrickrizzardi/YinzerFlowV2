@@ -1,8 +1,8 @@
-import type { THttpHeaders, THttpStatus, THttpStatusCode } from 'typedefs/constants/http.ts';
+import type { THttpHeaders, THttpStatus, THttpStatusCode } from '@typedefs/constants/http.ts';
 
 export interface IContext {
-  request: Request;
-  response: Response;
+  request: IRequest;
+  response: IResponse;
 }
 
 /**
@@ -44,7 +44,7 @@ export interface IMultipartFormData {
  *
  * This is the request object that is sent to the server.
  */
-export interface Request {
+export interface IRequest {
   protocol: string;
   method: string;
   path: string;
