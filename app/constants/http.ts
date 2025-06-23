@@ -53,7 +53,7 @@ export const httpMethod = {
   post: 'POST',
   put: 'PUT',
   patch: 'PATCH',
-  head: 'HEAD',
+  // head: 'HEAD',
   options: 'OPTIONS',
 } as const;
 

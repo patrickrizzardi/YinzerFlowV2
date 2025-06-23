@@ -1,4 +1,4 @@
-import type { CreateEnum } from 'typedefs/generic.ts';
+import type { CreateEnum } from 'typedefs/generic.typedefs.ts';
 import type { bodyParser } from 'constants/configuration.ts';
 
-export type BodyParser = CreateEnum<typeof bodyParser>;
+export type TBodyParser = CreateEnum<typeof bodyParser>;
