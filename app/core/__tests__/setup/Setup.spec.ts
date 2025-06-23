@@ -4,19 +4,7 @@ import { Setup } from '@core/setup/Setup.ts';
 import type { IContext } from '@typedefs/core/Context.js';
 
 describe('Setup', () => {
-  it('should have a default configuration', () => {
-    const setup = new Setup();
-    expect(setup.getConfiguration()).toBeDefined();
-  });
-
-  it('should override the default configuration keeping default values that are not provided', () => {
-    const setup = new Setup({
-      port: 3001,
-      proxyHops: 1,
-    });
-    expect(setup.getConfiguration().port).toBe(3001);
-    expect(setup.getConfiguration().proxyHops).toBe(1);
-  });
+  // Configurations are tested in handleCustomConfiguration.spec.ts
 
   it('should register routes of each http method', () => {
     const setup = new Setup();

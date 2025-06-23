@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import ip from 'ip';
-import { handleCustomConfiguration } from '@core/handleCustomConfiguration.ts';
+import { handleCustomConfiguration } from '@core/setup/handleCustomConfiguration.ts';
 
 describe('YinzerFlow', () => {
   it('should return a default configuration', () => {

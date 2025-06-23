@@ -1,4 +1,3 @@
-import ip from 'ip';
 import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
 import type { THttpMethod } from '@typedefs/constants/http.ts';
 import { RouteRegistry } from '@core/setup/RouteRegistry.ts';
@@ -7,23 +6,10 @@ import type { IHookOptions, IHookRegistry, TAfterHookResponse, TBeforeHookRespon
 import type { IRoute, IRouteRegistry } from '@typedefs/core/Route.js';
 import type { IGroup, ISetup } from '@typedefs/core/Setup.js';
 import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
-import { handleCustomConfiguration } from '@core/handleCustomConfiguration.ts';
-import { bodyParser } from '@constants/configuration.ts';
+import { handleCustomConfiguration } from '@core/setup/handleCustomConfiguration.ts';
 
 export class Setup implements ISetup {
-  private readonly configuration: IServerConfiguration = {
-    port: 3000,
-    host: ip.address(),
-    bodyParser: bodyParser.json,
-    networkLogs: false,
-    proxyHops: 0,
-    connectionOptions: {
-      socketTimeout: 30000,
-      gracefulShutdownTimeout: 30000,
-      keepAliveTimeout: 65000,
-      headersTimeout: 66000,
-    },
-  };
+  private readonly configuration: IServerConfiguration;
   private readonly routeRegistry = new RouteRegistry();
   private readonly hooks: IHookRegistry = {
     beforeAll: new Set(),
