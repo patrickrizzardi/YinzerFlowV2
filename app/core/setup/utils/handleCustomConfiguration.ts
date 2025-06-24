@@ -1,11 +1,19 @@
-import { bodyParser } from '@constants/configuration.ts';
 import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
 
+/**
+ * Handle custom configuration
+ *
+ * @example
+ * ```ts
+ * handleCustomConfiguration({ port: 3000 });
+ * // Returns { port: 3000, host: '0.0.0.0', rawBody: false, networkLogs: false, proxyHops: 0, connectionOptions: { socketTimeout: 30000, gracefulShutdownTimeout: 30000, keepAliveTimeout: 65000, headersTimeout: 66000 } }
+ * ```
+ */
 export const handleCustomConfiguration = (configuration?: IServerConfiguration): IServerConfiguration => {
   const defaultConfiguration: IServerConfiguration = {
     port: 5000,
     host: '0.0.0.0',
-    bodyParser: bodyParser.json,
+    rawBody: false,
     networkLogs: false,
     proxyHops: 0,
     connectionOptions: {

@@ -10,6 +10,12 @@
  * EXAMPLES OF PROBLEMS THIS PREVENTS:
  * - Bad: "/users/:id/posts/:id" → unclear which :id refers to what
  * - Good: "/users/:userId/posts/:postId" → crystal clear intent
+ *
+ * @example
+ * ```ts
+ * validateParameterNames('/users/:id/posts/:id');
+ * // Throws error: "Route /users/:id/posts/:id has duplicate parameter names: id. Parameter names must be unique within a route for clarity and to prevent conflicts."
+ * ```
  */
 export const validateParameterNames = (routePath: string): void => {
   // Extract all parameter names from the route

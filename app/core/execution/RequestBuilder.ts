@@ -1,0 +1,47 @@
+import { parseBody } from './utils/parseBody.ts';
+import type { IRequest } from '@typedefs/core/Context.js';
+import type { TContentType } from '@typedefs/constants/http.js';
+import type { IRequestBuilder } from '@typedefs/core/execution/RequestBuilder.js';
+import type { Setup } from '@core/setup/Setup.ts';
+import { parseHttpRequest } from '@core/execution/utils/parseHttpRequest.ts';
+import { parseQuery } from '@core/execution/utils/parseQuery.ts';
+import { parseIpAddress } from '@core/execution/utils/parseIpAddress.ts';
+import { extractBoundaryFromHeader } from '@core/execution/utils/extractBoundryFromHeader.ts';
+import { parseHeaders } from '@core/execution/utils/parseHeaders.ts';
+
+export class RequestBuilder implements IRequestBuilder {
+  private readonly request: IRequest;
+
+  constructor(rawRequest: Buffer, setup: Setup) {
+    this.request = this.buildRequest(rawRequest, setup);
+  }
+
+  private buildRequest(rawRequest: Buffer, setup: Setup): IRequest {
+    const request = rawRequest.toString();
+
+    const { method, path, protocol, headersRaw, rawBody } = parseHttpRequest(request);
+
+    const route = setup.getRouteRegistry().findRoute(method, path);
+    const headers = parseHeaders(headersRaw);
+
+    // Extract content type and boundary for body parsing
+    const contentTypeHeader = headers['content-type'];
+    const mainContentType = contentTypeHeader?.split(';')[0]?.trim().toLowerCase() as TContentType | undefined;
+    const boundary = extractBoundaryFromHeader(contentTypeHeader);
+
+    return {
+      method,
+      path,
+      protocol,
+      headers,
+      body: setup.getConfiguration().rawBody ? rawBody : parseBody(rawBody, mainContentType, boundary),
+      query: parseQuery(path),
+      params: route?.params ?? {},
+      ipAddress: parseIpAddress(setup, headers),
+    };
+  }
+
+  getRequest(): IRequest {
+    return this.request;
+  }
+}

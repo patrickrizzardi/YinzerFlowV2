@@ -168,6 +168,7 @@ export const httpHeaders = {
 
   // Proxy & Forwarding
   forwarded: 'Forwarded', // Proxy information
+  xForwardedFor: 'X-Forwarded-For', // Proxy information
   via: 'Via', // Proxy chain info
   maxForwards: 'Max-Forwards', // Hop limit
 

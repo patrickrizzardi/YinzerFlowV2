@@ -7,7 +7,7 @@ describe('YinzerFlow', () => {
     expect(config).toBeDefined();
     expect(config.port).toBe(5000);
     expect(config.host).toBe('0.0.0.0');
-    expect(config.bodyParser).toBe('json');
+    expect(config.rawBody).toBe(false);
     expect(config.networkLogs).toBe(false);
     expect(config.proxyHops).toBe(0);
   });
@@ -15,12 +15,12 @@ describe('YinzerFlow', () => {
   it('should return a custom configuration with the default values', () => {
     const config = handleCustomConfiguration({
       port: 3000,
-      bodyParser: 'text',
+      rawBody: true,
     });
 
     expect(config.port).toBe(3000);
     expect(config.host).toBe('0.0.0.0');
-    expect(config.bodyParser).toBe('text');
+    expect(config.rawBody).toBe(true);
     expect(config.networkLogs).toBe(false);
     expect(config.proxyHops).toBe(0);
   });

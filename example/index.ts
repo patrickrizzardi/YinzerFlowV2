@@ -2,7 +2,8 @@ import { YinzerFlow } from '@core/YinzerFlow.ts';
 
 const app = new YinzerFlow({});
 
-app.get('/', (ctx) => {
+app.post('/user/:id', (ctx) => {
+  console.log(ctx.request.body);
   return {
     message: 'Hello World',
   };
@@ -10,4 +11,4 @@ app.get('/', (ctx) => {
 
 await app.listen();
 
-console.log(app.getRouteRegistry());
+console.log(app.status());

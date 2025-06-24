@@ -16,6 +16,30 @@ export interface IContext {
 export type TJsonData<T = unknown> = Record<string, T> & T;
 
 /**
+ * Content-Disposition header parsed data
+ */
+export interface IContentDisposition {
+  name: string;
+  filename?: string;
+}
+
+/**
+ * Uploaded file information
+ */
+export interface IUploadedFile {
+  /** Original filename provided by the client */
+  filename: string;
+  /** MIME type of the file */
+  contentType: string;
+  /** Size of the file in bytes */
+  size: number;
+  /** File content - Buffer for binary files, string for text files */
+  content: Buffer | string;
+  /** Additional metadata about the file */
+  metadata?: Record<string, string>;
+}
+
+/**
  * Represents multipart form data with file uploads
  *
  * This interface is used for handling form submissions that include file uploads.
@@ -25,19 +49,13 @@ export interface IMultipartFormData {
   /** Regular form fields as key-value pairs */
   fields: Record<string, string>;
   /** Uploaded files indexed by field name */
-  files: Array<{
-    /** Original filename provided by the client */
-    filename: string;
-    /** MIME type of the file */
-    contentType: string;
-    /** Size of the file in bytes */
-    size: number;
-    /** file content */
-    content: string;
-    /** Additional metadata about the file */
-    metadata?: Record<string, string>;
-  }>;
+  files: Array<IUploadedFile>;
 }
+
+/**
+ * All possible request body types after parsing
+ */
+export type TRequestBody = Buffer | IMultipartFormData | TJsonData | string | undefined;
 
 /**
  * Represents the request object
@@ -49,9 +67,9 @@ export interface IRequest {
   method: string;
   path: string;
   headers: Partial<Record<THttpHeaders, string>>;
-  body: IMultipartFormData | TJsonData | string | undefined;
-  query: Record<string, string> | undefined;
-  params: Record<string, string> | undefined;
+  body: TRequestBody;
+  query: Record<string, string>;
+  params: Record<string, string>;
 
   // The ip address of the client (Configure proxy hops if behind a proxy, load balancer, etc.)
   ipAddress: string;
@@ -79,6 +97,7 @@ export interface IResponse {
   status: THttpStatus;
   headers: Partial<Record<THttpHeaders, string>>;
   body: TResponseBody;
+  rawResponse: string;
 }
 
 /**

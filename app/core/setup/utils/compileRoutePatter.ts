@@ -1,5 +1,14 @@
 import type { IPreCompiledRoute, IRoute } from '@typedefs/core/setup/RouteRegistry.js';
 
+/**
+ * Compile a route pattern into a regular expression
+ *
+ * @example
+ * ```ts
+ * compileRoutePattern({ path: '/users/:id/posts/:postId' });
+ * // Returns { pattern: /^users\/([^/]+)\/posts\/([^/]+)$/, paramNames: ['id', 'postId'], isParameterized: true }
+ * ```
+ */
 export const compileRoutePattern = (route: IRoute): IPreCompiledRoute => {
   const paramNames: Array<string> = [];
 

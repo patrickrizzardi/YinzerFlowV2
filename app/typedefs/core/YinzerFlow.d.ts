@@ -1,5 +1,3 @@
-import type { TBodyParser } from '@typedefs/configuration.ts';
-
 export interface IYinzerFlow {
   /**
    * Server Lifecycle
@@ -64,16 +62,16 @@ export interface IServerConfiguration {
    * Host name of the server
    * @default '0.0.0.0'
    */
-  readonly host?: string;
+  host?: string;
 
   //   corsOptions: CorsOptions;
   /**
-   * Body parser type
-   * @default 'json'
-   * TODO: Create an override function that can be used in the before hook because
-   * there are some instances where you need a raw request body.
+   * Return the raw request body
+   * @default false
+   * This is useful for when you need to parse the raw request body.
+   * YinzerFlow typically parses the request body for you, but if you need the raw body, you can set this to true.
    */
-  bodyParser?: TBodyParser;
+  rawBody?: boolean;
 
   /**
    * Verbose network logs
@@ -84,6 +82,7 @@ export interface IServerConfiguration {
   /**
    * Number of proxy hops to the client
    * @default 0
+   * TODO: Future feature
    */
   proxyHops?: number;
 
@@ -95,6 +94,7 @@ export interface IServerConfiguration {
    *  keepAliveDelay: 10000,
    *  keepAliveMaxDelay: 10000,
    *  keepAliveMaxDelay: 10000,
+   * TODO: Future feature
    */
   connectionOptions?: IConnectionOptions;
 

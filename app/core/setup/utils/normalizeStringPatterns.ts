@@ -17,6 +17,12 @@
  * - "/users%20profile" → "/users profile"
  * - "/users/../admin" → "/admin" (dot segment resolved)
  * - "/api/./users" → "/api/users" (current dir resolved)
+ *
+ * @example
+ * ```ts
+ * normalizePath('users');
+ * // Returns "/users"
+ * ```
  */
 export const normalizePath = (path: string): string => {
   // Step 1: Strip query parameters and fragments for route matching

@@ -1,38 +1,17 @@
 import { createServer } from 'net';
 import type { IYinzerFlow } from '@typedefs/core/YinzerFlow.js';
 
-import type { IContext } from '@typedefs/core/Context.js';
-
 import { Setup } from '@core/setup/Setup.ts';
+import { ContextBuilder } from '@core/execution/ContextBuilder.ts';
 
 export class YinzerFlow extends Setup implements IYinzerFlow {
   private isListening = false;
   private server?: ReturnType<typeof createServer>;
 
-  private readonly context: IContext = {
-    request: {
-      protocol: '',
-      method: '',
-      path: '',
-      headers: {},
-      body: undefined,
-      query: undefined,
-      params: undefined,
-      ipAddress: '',
-    },
-    response: {
-      statusCode: 200,
-      status: 'OK',
-      headers: {},
-      body: undefined,
-    },
-  };
-
   /**
    * Server Lifecycle
    */
   async listen(): Promise<void> {
-    // TODO: Implement listen
     return new Promise((resolve, reject) => {
       this.server = createServer();
 
@@ -40,6 +19,7 @@ export class YinzerFlow extends Setup implements IYinzerFlow {
        * Setup event listeners
        */
       this.server.on('error', (error) => {
+        console.error('An error occurred with yinzer flow. Please open an issue on github.', error);
         reject(error);
       });
 
@@ -49,7 +29,13 @@ export class YinzerFlow extends Setup implements IYinzerFlow {
       });
 
       this.server.on('connection', (socket) => {
+        socket.on('data', (data) => {
+          const context = new ContextBuilder(data, this);
+          socket.write(context.getContext().response.rawResponse);
+        });
+
         socket.on('error', (error) => {
+          console.error('An error occurred with yinzer flow. Please open an issue on github.', error);
           reject(error);
         });
       });
@@ -80,8 +66,8 @@ export class YinzerFlow extends Setup implements IYinzerFlow {
   } {
     return {
       isListening: this.isListening,
-      port: this.configuration.port,
-      host: this.configuration.host,
+      port: this.getConfiguration().port,
+      host: this.getConfiguration().host,
     };
   }
 }
