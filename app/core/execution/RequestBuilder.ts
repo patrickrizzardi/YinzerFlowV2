@@ -6,7 +6,7 @@ import type { Setup } from '@core/setup/Setup.ts';
 import { parseHttpRequest } from '@core/execution/utils/parseHttpRequest.ts';
 import { parseQuery } from '@core/execution/utils/parseQuery.ts';
 import { parseIpAddress } from '@core/execution/utils/parseIpAddress.ts';
-import { extractBoundaryFromHeader } from '@core/execution/utils/extractBoundryFromHeader.ts';
+import { extractBoundaryFromHeader } from '@core/execution/utils/extractBoundaryFromHeader.ts';
 import { parseHeaders } from '@core/execution/utils/parseHeaders.ts';
 
 export class RequestBuilder implements IRequestBuilder {

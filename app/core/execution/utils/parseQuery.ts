@@ -21,7 +21,14 @@ export const parseQuery = (path: string): Record<string, string> => {
   for (const pair of pairs) {
     const [key, value] = pair.split('=');
     if (key) {
-      params[decodeURIComponent(key)] = value ? decodeURIComponent(value) : '';
+      try {
+        const decodedKey = decodeURIComponent(key);
+        const decodedValue = value ? decodeURIComponent(value) : '';
+        params[decodedKey] = decodedValue;
+      } catch {
+        // If decoding fails, use the original values
+        params[key] = value ?? '';
+      }
     }
   }
 

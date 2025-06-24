@@ -1,4 +1,5 @@
 import type { THttpMethod } from '@typedefs/constants/http.js';
+import { httpMethod } from '@constants/http.ts';
 import { divideString } from '@utils/string.ts';
 
 /**
@@ -17,13 +18,17 @@ export const parseHttpRequest = (request: string): { method: THttpMethod; path: 
    * - The headers are separated from the body by two newlines
    */
   const [firstLine, rest] = divideString(request, '\r\n');
-  const [method, path, protocol] = firstLine.split(' ', 3) as [THttpMethod, string, string];
+  const [method, path, protocol] = firstLine.split(' ', 3);
   const [headersRaw, rawBody] = divideString(rest, '\r\n\r\n');
 
+  if (!method || !Object.values(httpMethod).includes(method as THttpMethod)) {
+    throw new Error(`Invalid HTTP method: ${method}`);
+  }
+
   return {
-    method,
-    path,
-    protocol,
+    method: method as THttpMethod,
+    path: path ?? '',
+    protocol: protocol ?? '',
     headersRaw,
     rawBody,
   };

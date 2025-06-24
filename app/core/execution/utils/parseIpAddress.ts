@@ -14,5 +14,7 @@ export const parseIpAddress = (setup: Setup, headers: Partial<Record<THttpHeader
   const { proxyHops } = setup.getConfiguration();
   if (!proxyHops || proxyHops === 0) return headers['x-forwarded-for'] ?? '';
 
-  return headers['x-forwarded-for']?.split(',').at(-proxyHops) ?? '';
+  if (proxyHops < 0) return '';
+
+  return headers['x-forwarded-for']?.split(',').at(-proxyHops)?.trim() ?? '';
 };

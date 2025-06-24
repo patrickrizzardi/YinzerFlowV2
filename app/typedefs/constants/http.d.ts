@@ -6,4 +6,4 @@ export type THttpStatusCode = CreateEnum<typeof httpStatusCode>;
 export type THttpMethod = CreateEnum<typeof httpMethod>;
 export type TContentType = CreateEnum<typeof contentType>;
 
-export type THttpHeaders = Lowercase<CreateEnum<typeof httpHeaders>>;
+export type THttpHeaders = Lowercase<CreateEnum<typeof httpHeaders>> | string;

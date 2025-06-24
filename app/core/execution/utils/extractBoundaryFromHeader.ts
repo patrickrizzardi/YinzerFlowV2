@@ -10,6 +10,6 @@
 export const extractBoundaryFromHeader = (contentTypeHeader?: string): string | undefined => {
   if (!contentTypeHeader) return undefined;
 
-  const boundaryMatch = /boundary=(?<temp1>[^;,\s]+)/i.exec(contentTypeHeader);
+  const boundaryMatch = /boundary\s*=\s*(?<temp1>[^;,\s]*)/i.exec(contentTypeHeader);
   return boundaryMatch?.[1];
 };
