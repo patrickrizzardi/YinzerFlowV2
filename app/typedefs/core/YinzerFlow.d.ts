@@ -1,16 +1,3 @@
-export interface IYinzerFlow {
-  /**
-   * Server Lifecycle
-   */
-  listen: () => Promise<void>;
-  close: () => Promise<void>;
-  status: () => {
-    isListening: boolean;
-    port: number | undefined;
-    host: string | undefined;
-  };
-}
-
 export interface IConnectionOptions {
   /**
    * Default socket timeout in milliseconds (30 seconds)

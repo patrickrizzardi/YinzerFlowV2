@@ -1,10 +1,10 @@
 import { createServer } from 'net';
-import type { IYinzerFlow } from '@typedefs/core/YinzerFlow.js';
 
 import { Setup } from '@core/setup/Setup.ts';
+import { RequestHandler } from '@core/execution/RequestHandler.ts';
 import { ContextBuilder } from '@core/execution/ContextBuilder.ts';
 
-export class YinzerFlow extends Setup implements IYinzerFlow {
+export class YinzerFlow extends Setup {
   private isListening = false;
   private server?: ReturnType<typeof createServer>;
 
@@ -13,6 +13,9 @@ export class YinzerFlow extends Setup implements IYinzerFlow {
    */
   async listen(): Promise<void> {
     return new Promise((resolve, reject) => {
+      // Create request handler once per listening session
+      const requestHandler = new RequestHandler(this);
+
       this.server = createServer();
 
       /**
@@ -30,13 +33,30 @@ export class YinzerFlow extends Setup implements IYinzerFlow {
 
       this.server.on('connection', (socket) => {
         socket.on('data', (data) => {
-          const context = new ContextBuilder(data, this);
-          socket.write(context.getContext().rawResponse);
+          void (async (): Promise<void> => {
+            try {
+              // 1. Create context from raw request data
+              const context = new ContextBuilder(data, this);
+
+              // 2. Handle the request pipeline
+              await requestHandler.handle(context);
+
+              // 3. Send response
+              socket.write(context.response.getRawResponse());
+              socket.end();
+            } catch (error) {
+              console.error('Request handling failed. Please open an issue on github.', error);
+              socket.destroy();
+            }
+          })().catch((error) => {
+            // This satisfies the linter - we're explicitly handling the promise
+            console.error('Unexpected error in request handler. Please open an issue on github.', error);
+            socket.destroy();
+          });
         });
 
         socket.on('error', (error) => {
-          console.error('An error occurred with yinzer flow. Please open an issue on github.', error);
-          reject(error);
+          console.error('Socket error:', error);
         });
       });
 

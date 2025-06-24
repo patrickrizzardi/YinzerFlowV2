@@ -1,7 +1,8 @@
 import { formatBodyIntoString } from '@core/execution/utils/formatBodyIntoString.ts';
 import { determineEncoding } from '@core/execution/utils/determineEncoding.ts';
+import { inferContentType } from '@core/execution/utils/inferContentType.ts';
 import { mapStatusCodeToMessage } from '@core/execution/utils/mapStatusCodeToMessage.ts';
-import type { IRequest, IResponse } from '@typedefs/core/Context.js';
+import type { IRequest, IResponse, TResponseBody } from '@typedefs/core/Context.js';
 import type { IResponseBuilder } from '@typedefs/core/execution/ResponseBuilder.js';
 import { httpStatus, httpStatusCode } from '@constants/http.ts';
 import type { THttpHeaders, THttpStatusCode } from '@typedefs/constants/http.js';
@@ -96,8 +97,35 @@ export class ResponseBuilder implements IResponseBuilder {
     }
   }
 
-  setBody(body: string): void {
+  /**
+   * Set the body of the response
+   * Accepts any response body type and automatically infers content-type if not set
+   *
+   * @param body - Response body (string, object, Buffer, etc.)
+   *
+   * @example
+   * ```typescript
+   * // String body
+   * builder.setBody('Hello, world!');
+   *
+   * // JSON object
+   * builder.setBody({ message: 'Hello', count: 42 });
+   *
+   * // Binary data
+   * const imageBuffer = fs.readFileSync('image.jpg');
+   * builder.setBody(imageBuffer);
+   * ```
+   */
+  setBody(body: TResponseBody): void {
     this.formattedResponse.body = body;
+
+    // Auto-set content-type if not already set
+    if (!this.formattedResponse.headers['content-type']) {
+      const detectedContentType = inferContentType(body);
+      this.setHeadersIfNotSet({
+        'content-type': detectedContentType,
+      });
+    }
   }
 
   /**

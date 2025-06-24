@@ -1,10 +1,6 @@
 import type { THttpHeaders, THttpStatus, THttpStatusCode } from '@typedefs/constants/http.ts';
 
-export interface IContext {
-  request: IRequest;
-  response: IResponse;
-  rawResponse: string;
-}
+
 
 /**
  * Represents a JSON data object after parsing
@@ -110,7 +106,7 @@ export interface IResponse {
  * @param ctx - The request context containing request and response objects
  * @returns A response body or a promise that resolves to a response body
  */
-export type TResponseFunction = (ctx: IContext) => Promise<TResponseBody> | TResponseBody;
+export type TResponseFunction = (ctx: Context) => Promise<TResponseBody> | TResponseBody;
 
 /**
  * Represents a route handler function that may or may not return a response body
@@ -122,4 +118,4 @@ export type TResponseFunction = (ctx: IContext) => Promise<TResponseBody> | TRes
  * @param ctx - The request context containing request and response objects
  * @returns A response body, a promise that resolves to a response body, void, or a promise that resolves to void
  */
-export type TUndefinableResponseFunction = TResponseFunction | ((ctx: IContext) => Promise<void> | void);
+export type TUndefinableResponseFunction = TResponseFunction | ((ctx: Context) => Promise<void> | void);

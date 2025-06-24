@@ -1,27 +1,23 @@
 import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
 import type { THttpMethod } from '@typedefs/constants/http.ts';
 import { RouteRegistry } from '@core/setup/RouteRegistry.ts';
-import type { IContext, TResponseBody, TResponseFunction } from '@typedefs/core/Context.js';
+import type { ContextBuilder, TResponseBody, TResponseFunction } from '@typedefs/core/Context.js';
 import type { IRoute } from '@typedefs/core/setup/RouteRegistry.js';
-import type { IGroup, IHookOptions, IHookRegistry, ISetup, TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/setup/Setup.js';
+import type { IGroup, IHookOptions, IHookRegistry, TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/setup/Setup.js';
 import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
 import { handleCustomConfiguration } from '@core/setup/utils/handleCustomConfiguration.ts';
 
-export class Setup implements ISetup {
+export class Setup {
   private readonly configuration: IServerConfiguration;
   private readonly routeRegistry = new RouteRegistry();
   private readonly hooks: IHookRegistry = {
     beforeAll: new Set(),
     afterAll: new Set(),
-    onError: (ctx: IContext): TResponseBody => {
-      console.error(ctx.response.body);
+    onError: (ctx: ContextBuilder): TResponseBody => {
+      ctx.response.setStatusCode(500);
       return {
-        statusCode: httpStatusCode.internalServerError,
-        status: httpStatus.internalServerError,
-        headers: { 'Content-Type': 'application/json' },
-        body: {
-          message: 'Internal Server Error',
-        },
+        success: false,
+        message: 'Internal Server Error',
       };
     },
   };
@@ -87,7 +83,15 @@ export class Setup implements ISetup {
     callback(group);
   }
 
-  //   ===== Hook Registration =====
+  /**
+   * Hook Registration
+   *
+   * Note these are going to be called dynamically at run time, for now
+   * we are just storing them in the server object until runtime. Although
+   * it is slower during lookup, it is more flexible and memory efficient
+   * allowing for more flexibility to include hook modification, conditional
+   * hook execution, and better debugging.
+   */
   beforeAll(handler: TBeforeHookResponse, options?: IHookOptions): void {
     this.hooks.beforeAll.add({ handler, options });
   }

@@ -5,6 +5,7 @@ import type { TRequestBody } from '@typedefs/core/Context.ts';
 
 import { parseUrlEncodedForm } from '@core/execution/utils/parseUrlEncodedForm.ts';
 import type { TContentType } from '@typedefs/constants/http.js';
+import { inferContentTypeFromString } from '@core/execution/utils/inferContentType.ts';
 
 /**
  * Parse request body based on Content-Type header
@@ -28,7 +29,7 @@ export const parseBody = (body: string, headerContentType?: TContentType, bounda
   }
 
   // Determine the content type - either passed in or inferred
-  const mainContentType = headerContentType ?? inferContentType(body);
+  const mainContentType = headerContentType ?? inferContentTypeFromString(body);
 
   // Parse based on Content-Type
   if (mainContentType === contentType.json) return parseApplicationJson(body);
@@ -46,27 +47,4 @@ export const parseBody = (body: string, headerContentType?: TContentType, bounda
   return body;
 };
 
-/**
- * Infer content type from body content when Content-Type header is missing
- */
-const inferContentType = (body: string): string => {
-  const trimmedBody = body.trim();
 
-  // Try to detect JSON - but validate it's actually parseable
-  if ((trimmedBody.startsWith('{') && trimmedBody.endsWith('}')) || (trimmedBody.startsWith('[') && trimmedBody.endsWith(']'))) {
-    try {
-      JSON.parse(trimmedBody);
-      return contentType.json;
-    } catch {
-      // Not valid JSON, continue with other checks
-    }
-  }
-
-  // Try to detect URL-encoded form data
-  if (trimmedBody.includes('=') && trimmedBody.includes('&')) {
-    return contentType.form;
-  }
-
-  // Default to plain text
-  return 'text/plain';
-};
