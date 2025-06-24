@@ -2,10 +2,7 @@ import type { THttpMethod } from '@typedefs/constants/http.ts';
 import type { TResponseFunction } from '@typedefs/core/Context.js';
 import type { TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/setup/Setup.js';
 
-export interface IRouteRegistry {
-  register: (route: IRoute) => void;
-  findRoute: (method: THttpMethod, path: string) => IRouteMatch | undefined;
-}
+
 
 export interface IRouteMatch {
   route: IRoute;

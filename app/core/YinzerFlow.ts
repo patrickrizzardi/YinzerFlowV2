@@ -31,7 +31,7 @@ export class YinzerFlow extends Setup implements IYinzerFlow {
       this.server.on('connection', (socket) => {
         socket.on('data', (data) => {
           const context = new ContextBuilder(data, this);
-          socket.write(context.getContext().response.rawResponse);
+          socket.write(context.getContext().rawResponse);
         });
 
         socket.on('error', (error) => {

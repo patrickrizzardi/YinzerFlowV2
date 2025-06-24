@@ -3,6 +3,7 @@ import type { THttpHeaders, THttpStatus, THttpStatusCode } from '@typedefs/const
 export interface IContext {
   request: IRequest;
   response: IResponse;
+  rawResponse: string;
 }
 
 /**
@@ -97,7 +98,6 @@ export interface IResponse {
   status: THttpStatus;
   headers: Partial<Record<THttpHeaders, string>>;
   body: TResponseBody;
-  rawResponse: string;
 }
 
 /**

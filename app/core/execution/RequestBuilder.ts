@@ -1,7 +1,6 @@
 import { parseBody } from './utils/parseBody.ts';
 import type { IRequest } from '@typedefs/core/Context.js';
 import type { TContentType } from '@typedefs/constants/http.js';
-import type { IRequestBuilder } from '@typedefs/core/execution/RequestBuilder.js';
 import type { Setup } from '@core/setup/Setup.ts';
 import { parseHttpRequest } from '@core/execution/utils/parseHttpRequest.ts';
 import { parseQuery } from '@core/execution/utils/parseQuery.ts';
@@ -9,13 +8,22 @@ import { parseIpAddress } from '@core/execution/utils/parseIpAddress.ts';
 import { extractBoundaryFromHeader } from '@core/execution/utils/extractBoundaryFromHeader.ts';
 import { parseHeaders } from '@core/execution/utils/parseHeaders.ts';
 
-export class RequestBuilder implements IRequestBuilder {
+export class RequestBuilder {
   private readonly request: IRequest;
 
   constructor(rawRequest: Buffer, setup: Setup) {
     this.request = this.buildRequest(rawRequest, setup);
   }
 
+  /**
+   * @internal
+   * Build the request object
+   *
+   * @example
+   * ```typescript
+   * const request = builder.buildRequest(rawRequest, setup);
+   * ```
+   */
   private buildRequest(rawRequest: Buffer, setup: Setup): IRequest {
     const request = rawRequest.toString();
 
@@ -47,6 +55,15 @@ export class RequestBuilder implements IRequestBuilder {
     };
   }
 
+  /**
+   * @internal
+   * Get the request object
+   *
+   * @example
+   * ```typescript
+   * const request = builder.getRequest();
+   * ```
+   */
   getRequest(): IRequest {
     return this.request;
   }

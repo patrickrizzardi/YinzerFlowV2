@@ -2,7 +2,7 @@ import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
 import type { THttpMethod } from '@typedefs/constants/http.ts';
 import { RouteRegistry } from '@core/setup/RouteRegistry.ts';
 import type { IContext, TResponseBody, TResponseFunction } from '@typedefs/core/Context.js';
-import type { IRoute, IRouteRegistry } from '@typedefs/core/setup/RouteRegistry.js';
+import type { IRoute } from '@typedefs/core/setup/RouteRegistry.js';
 import type { IGroup, IHookOptions, IHookRegistry, ISetup, TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/setup/Setup.js';
 import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
 import { handleCustomConfiguration } from '@core/setup/utils/handleCustomConfiguration.ts';
@@ -103,15 +103,41 @@ export class Setup implements ISetup {
     this.hooks.onError = handler;
   }
 
-  //   ===== Getters =====
-  getRouteRegistry(): IRouteRegistry {
+  /**
+   * @internal
+   * Get the route registry
+   *
+   * @example
+   * ```typescript
+   * const routeRegistry = setup.getRouteRegistry();
+   * ```
+   */
+  getRouteRegistry(): RouteRegistry {
     return this.routeRegistry;
   }
 
+  /**
+   * @internal
+   * Get the hooks
+   *
+   * @example
+   * ```typescript
+   * const hooks = setup.getHooks();
+   * ```
+   */
   getHooks(): IHookRegistry {
     return this.hooks;
   }
 
+  /**
+   * @internal
+   * Get the configuration
+   *
+   * @example
+   * ```typescript
+   * const configuration = setup.getConfiguration();
+   * ```
+   */
   getConfiguration(): IServerConfiguration {
     return this.configuration;
   }

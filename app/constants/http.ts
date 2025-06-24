@@ -12,7 +12,11 @@
 export const httpStatus = {
   ok: 'OK',
   created: 'Created',
+  accepted: 'Accepted',
   noContent: 'No Content',
+  movedPermanently: 'Moved Permanently',
+  found: 'Found',
+  notModified: 'Not Modified',
   badRequest: 'Bad Request',
   unauthorized: 'Unauthorized',
   forbidden: 'Forbidden',
@@ -31,7 +35,11 @@ export const httpStatus = {
 export const httpStatusCode = {
   ok: 200,
   created: 201,
+  accepted: 202,
   noContent: 204,
+  movedPermanently: 301,
+  found: 302,
+  notModified: 304,
   badRequest: 400,
   unauthorized: 401,
   forbidden: 403,

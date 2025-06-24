@@ -2,7 +2,7 @@ import { compileRoutePattern } from '@core/setup/utils/compileRoutePatter.ts';
 import { normalizePath, normalizeRouteStructure } from '@core/setup/utils/normalizeStringPatterns.ts';
 import { validateParameterNames } from '@core/setup/utils/validateParameterNames.ts';
 import type { THttpMethod } from '@typedefs/constants/http.ts';
-import type { IPreCompiledRoute, IRoute, IRouteMatch, IRouteRegistry } from '@typedefs/core/setup/RouteRegistry.js';
+import type { IPreCompiledRoute, IRoute, IRouteMatch } from '@typedefs/core/setup/RouteRegistry.js';
 
 /**
  * RouteRegistry: Efficient route storage and matching
@@ -21,7 +21,7 @@ import type { IPreCompiledRoute, IRoute, IRouteMatch, IRouteRegistry } from '@ty
  * - "/users" (exact) → stored in exactRoutes Map for instant lookup
  * - "/users/:id" (parameterized) → compiled to regex, stored in parameterizedRoutes Array
  */
-export class RouteRegistry implements IRouteRegistry {
+export class RouteRegistry {
   /**
    * Fast O(1) lookup for routes without parameters
    * Example: GET /users, POST /login, etc.
@@ -40,6 +40,7 @@ export class RouteRegistry implements IRouteRegistry {
   private readonly parameterizedRoutes = new Map<THttpMethod, Array<IPreCompiledRoute>>();
 
   /**
+   * @internal
    * Register a new route
    *
    * PERFORMANCE NOTE: This happens at server startup, so we can afford
@@ -72,6 +73,7 @@ export class RouteRegistry implements IRouteRegistry {
   }
 
   /**
+   * @internal
    * Check if a route pattern already exists (for conflict detection)
    * This is different from findRoute which matches request paths to patterns
    */
@@ -102,6 +104,7 @@ export class RouteRegistry implements IRouteRegistry {
   }
 
   /**
+   * @internal
    * Find a route and extract parameters from the request path
    *
    * RUNTIME PERFORMANCE: This is called for every HTTP request, so it must be fast!
@@ -129,6 +132,7 @@ export class RouteRegistry implements IRouteRegistry {
   }
 
   /**
+   * @internal
    * Store an exact route (no parameters) for O(1) lookup
    */
   private storeExactRoute(method: THttpMethod, path: string, route: IRoute): void {
@@ -140,6 +144,7 @@ export class RouteRegistry implements IRouteRegistry {
   }
 
   /**
+   * @internal
    * Store a parameterized route with pre-compiled regex pattern
    */
   private storeParameterizedRoute(method: THttpMethod, route: IRoute): void {
@@ -162,6 +167,7 @@ export class RouteRegistry implements IRouteRegistry {
   }
 
   /**
+   * @internal
    * Find and match a parameterized route, extracting parameters
    */
   private findParameterizedRoute(method: THttpMethod, path: string): IRouteMatch | undefined {
