@@ -40,8 +40,10 @@ export type TAfterHookResponse = TResponseFunction;
 
 export type IHookOptions = {
   routesToExclude?: Array<string>;
+  rawBody?: boolean;
 } & {
   routesToInclude?: Array<string>;
+  rawBody?: boolean;
 };
 
 export interface IHookRegistry {

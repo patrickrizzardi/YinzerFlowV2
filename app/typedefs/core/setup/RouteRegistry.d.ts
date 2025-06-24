@@ -19,8 +19,9 @@ export interface IRoute {
   handler: TResponseFunction;
   options?:
     | {
-        beforeHooks: Array<TBeforeHookResponse>;
-        afterHooks: Array<TAfterHookResponse>;
+        beforeHooks?: Array<TBeforeHookResponse>;
+        afterHooks?: Array<TAfterHookResponse>;
+        rawBody?: boolean;
       }
     | undefined;
 }

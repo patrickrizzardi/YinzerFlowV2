@@ -16,7 +16,6 @@ export class ContextBuilder implements IContextBuilder {
     this.request = new RequestBuilder(rawRequest, setup).getRequest();
     this.response = new ResponseBuilder(setup, this.request).getResponse();
 
-    console.log(this.request);
   }
 
   getContext(): IContext {

@@ -29,12 +29,18 @@ export class RequestBuilder implements IRequestBuilder {
     const mainContentType = contentTypeHeader?.split(';')[0]?.trim().toLowerCase() as TContentType | undefined;
     const boundary = extractBoundaryFromHeader(contentTypeHeader);
 
+    /**
+     * If the route or setup has a rawBody option, we do not parse the body
+     * If the route is not defined, we use the setup's rawBody option
+     */
+    const doNotParseBody = route?.route.options?.rawBody ?? setup.getConfiguration().rawBody;
+
     return {
       method,
       path,
       protocol,
       headers,
-      body: setup.getConfiguration().rawBody ? rawBody : parseBody(rawBody, mainContentType, boundary),
+      body: doNotParseBody ? rawBody : parseBody(rawBody, mainContentType, boundary),
       query: parseQuery(path),
       params: route?.params ?? {},
       ipAddress: parseIpAddress(setup, headers),

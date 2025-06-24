@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { RequestBuilder } from '@core/execution/RequestBuilder.ts';
 import { Setup } from '@core/setup/Setup.ts';
-import type { THttpMethod } from '@typedefs/constants/http.js';
 
 describe('RequestBuilder', () => {
-  const createMockSetup = (config = {}) => {
-    return new Setup(config);
-  };
-
   const createRawRequest = (requestString: string) => Buffer.from(requestString);
 
   describe('Integration and orchestration', () => {
@@ -99,6 +94,139 @@ describe('RequestBuilder', () => {
       const request = requestBuilder.getRequest();
 
       expect(request.ipAddress).toBe('203.0.113.1, 192.168.1.100');
+    });
+  });
+
+  describe('RawBody configuration hierarchy', () => {
+    it('should use route-level rawBody when route specifies true, overriding setup false', () => {
+      const jsonBody = '{"name": "John", "age": 30}';
+      const rawRequest = createRawRequest(`POST /api/upload HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n${jsonBody}`);
+
+      const setup = new Setup({ rawBody: false }); // Setup says parse the body
+
+      // Register route with rawBody: true (should override setup)
+      setup.post('/api/upload', () => ({}), { rawBody: true });
+
+      const requestBuilder = new RequestBuilder(rawRequest, setup);
+      const request = requestBuilder.getRequest();
+
+      expect(request.body).toBe(jsonBody); // Should be raw string, not parsed JSON
+    });
+
+    it('should use route-level rawBody when route specifies false, overriding setup true', () => {
+      const jsonBody = '{"name": "John", "age": 30}';
+      const rawRequest = createRawRequest(`POST /api/process HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n${jsonBody}`);
+
+      const setup = new Setup({ rawBody: true }); // Setup says keep raw body
+
+      // Register route with rawBody: false (should override setup)
+      setup.post('/api/process', () => ({}), { rawBody: false });
+
+      const requestBuilder = new RequestBuilder(rawRequest, setup);
+      const request = requestBuilder.getRequest();
+
+      expect(request.body).toEqual({ name: 'John', age: 30 }); // Should be parsed JSON, not raw string
+    });
+
+    it('should fallback to setup rawBody when route does not specify rawBody option', () => {
+      const jsonBody = '{"name": "John", "age": 30}';
+      const rawRequest = createRawRequest(`POST /api/fallback HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n${jsonBody}`);
+
+      const setup = new Setup({ rawBody: true });
+
+      // Register route without rawBody option (should use setup config)
+      setup.post('/api/fallback', () => ({}));
+
+      const requestBuilder = new RequestBuilder(rawRequest, setup);
+      const request = requestBuilder.getRequest();
+
+      expect(request.body).toBe(jsonBody); // Should use setup's rawBody: true
+    });
+
+    it('should fallback to setup rawBody when route options exist but rawBody is undefined', () => {
+      const jsonBody = '{"name": "John", "age": 30}';
+      const rawRequest = createRawRequest(`POST /api/hooks HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n${jsonBody}`);
+
+      const setup = new Setup({ rawBody: false });
+
+      // Register route with options but no rawBody specified
+      setup.post('/api/hooks', () => ({}), {
+        beforeHooks: [],
+        afterHooks: [],
+        // rawBody is undefined, should fallback to setup
+      });
+
+      const requestBuilder = new RequestBuilder(rawRequest, setup);
+      const request = requestBuilder.getRequest();
+
+      expect(request.body).toEqual({ name: 'John', age: 30 }); // Should use setup's rawBody: false (parsed)
+    });
+
+    it('should work with different content types and route-level rawBody', () => {
+      const formBody = 'name=John+Doe&email=john%40example.com';
+      const rawRequest = createRawRequest(`POST /api/form HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\n${formBody}`);
+
+      const setup = new Setup({ rawBody: false });
+
+      // Route specifies rawBody: true for form data
+      setup.post('/api/form', () => ({}), { rawBody: true });
+
+      const requestBuilder = new RequestBuilder(rawRequest, setup);
+      const request = requestBuilder.getRequest();
+
+      expect(request.body).toBe(formBody); // Should be raw string, not parsed form object
+    });
+
+    it('should handle route-level rawBody with multipart data', () => {
+      const multipartBody = '--test123\r\nContent-Disposition: form-data; name="field"\r\n\r\nvalue\r\n--test123--';
+      const rawRequest = createRawRequest(
+        `POST /api/upload HTTP/1.1\r\nHost: localhost\r\nContent-Type: multipart/form-data; boundary=test123\r\n\r\n${multipartBody}`,
+      );
+
+      const setup = new Setup({ rawBody: false });
+
+      // Route specifies rawBody: true for multipart
+      setup.post('/api/upload', () => ({}), { rawBody: true });
+
+      const requestBuilder = new RequestBuilder(rawRequest, setup);
+      const request = requestBuilder.getRequest();
+
+      expect(request.body).toBe(multipartBody); // Should be raw string, not parsed multipart object
+    });
+
+    it('should handle unmatched routes with setup rawBody configuration', () => {
+      const jsonBody = '{"test": "data"}';
+      const rawRequest = createRawRequest(`POST /unknown/route HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n${jsonBody}`);
+
+      const setup = new Setup({ rawBody: true });
+      // No route registered for /unknown/route
+
+      const requestBuilder = new RequestBuilder(rawRequest, setup);
+      const request = requestBuilder.getRequest();
+
+      expect(request.body).toBe(jsonBody); // Should use setup's rawBody: true since no route found
+      expect(request.params).toEqual({}); // No route match
+    });
+
+    it('should handle group-level rawBody options', () => {
+      const jsonBody = '{"groupTest": "data"}';
+      const rawRequest = createRawRequest(`POST /api/v1/test HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n${jsonBody}`);
+
+      const setup = new Setup({ rawBody: false });
+
+      // Register a group with rawBody option
+      setup.group(
+        '/api/v1',
+        (group) => {
+          group.post('/test', () => ({}));
+        },
+        { rawBody: true },
+      );
+
+      const requestBuilder = new RequestBuilder(rawRequest, setup);
+      const request = requestBuilder.getRequest();
+
+      expect(request.body).toBe(jsonBody); // Should use group's rawBody: true
     });
   });
 

@@ -67,6 +67,8 @@ export class Setup implements ISetup {
           options: {
             beforeHooks: [...(options?.beforeHooks ?? []), ...(routeOptions?.beforeHooks ?? [])],
             afterHooks: [...(routeOptions?.afterHooks ?? []), ...(options?.afterHooks ?? [])],
+            ...(routeOptions?.rawBody !== undefined && { rawBody: routeOptions.rawBody }),
+            ...(routeOptions?.rawBody === undefined && options?.rawBody !== undefined && { rawBody: options.rawBody }),
           },
         });
       };
