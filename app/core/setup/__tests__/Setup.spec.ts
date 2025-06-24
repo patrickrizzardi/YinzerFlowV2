@@ -15,8 +15,8 @@ describe('Setup', () => {
     setup.delete('/', () => {});
     setup.options('/', () => {});
     expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/')).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/')?.options?.beforeHooks).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/')?.options?.afterHooks).toBeDefined();
+    expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/')?.route.options?.beforeHooks).toBeDefined();
+    expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/')?.route.options?.afterHooks).toBeDefined();
     expect(setup.getRouteRegistry().findRoute(httpMethod.post, '/')).toBeDefined();
     expect(setup.getRouteRegistry().findRoute(httpMethod.put, '/')).toBeDefined();
     expect(setup.getRouteRegistry().findRoute(httpMethod.patch, '/')).toBeDefined();
@@ -57,13 +57,13 @@ describe('Setup', () => {
       },
     );
 
-    const route = setup.getRouteRegistry().findRoute(httpMethod.get, '/api/users');
+    const routeMatch = setup.getRouteRegistry().findRoute(httpMethod.get, '/api/users');
 
     // Should be: [groupBefore, routeBefore]
-    expect(route?.options?.beforeHooks).toEqual([groupBeforeHook, routeBeforeHook]);
+    expect(routeMatch?.route.options?.beforeHooks).toEqual([groupBeforeHook, routeBeforeHook]);
 
     // Should be: [routeAfter, groupAfter]
-    expect(route?.options?.afterHooks).toEqual([routeAfterHook, groupAfterHook]);
+    expect(routeMatch?.route.options?.afterHooks).toEqual([routeAfterHook, groupAfterHook]);
   });
 
   it('should have beforeAll and afterAll hooks', () => {

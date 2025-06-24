@@ -2,11 +2,10 @@ import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
 import type { THttpMethod } from '@typedefs/constants/http.ts';
 import { RouteRegistry } from '@core/setup/RouteRegistry.ts';
 import type { IContext, TResponseBody, TResponseFunction } from '@typedefs/core/Context.js';
-import type { IHookOptions, IHookRegistry, TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/Hook.js';
-import type { IRoute, IRouteRegistry } from '@typedefs/core/Route.js';
-import type { IGroup, ISetup } from '@typedefs/core/Setup.js';
+import type { IRoute, IRouteRegistry } from '@typedefs/core/setup/RouteRegistry.js';
+import type { IGroup, IHookOptions, IHookRegistry, ISetup, TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/setup/Setup.js';
 import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
-import { handleCustomConfiguration } from '@core/setup/handleCustomConfiguration.ts';
+import { handleCustomConfiguration } from '@core/setup/utils/handleCustomConfiguration.ts';
 
 export class Setup implements ISetup {
   private readonly configuration: IServerConfiguration;
@@ -20,13 +19,15 @@ export class Setup implements ISetup {
         statusCode: httpStatusCode.internalServerError,
         status: httpStatus.internalServerError,
         headers: { 'Content-Type': 'application/json' },
-        body: 'undefined',
+        body: {
+          message: 'Internal Server Error',
+        },
       };
     },
   };
 
-  constructor(configuration?: IServerConfiguration) {
-    this.configuration = handleCustomConfiguration(configuration);
+  constructor(customConfiguration?: IServerConfiguration) {
+    this.configuration = handleCustomConfiguration(customConfiguration);
   }
 
   //   ===== Route Registration =====

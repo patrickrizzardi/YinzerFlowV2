@@ -1,11 +1,10 @@
-import ip from 'ip';
 import { bodyParser } from '@constants/configuration.ts';
 import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
 
 export const handleCustomConfiguration = (configuration?: IServerConfiguration): IServerConfiguration => {
   const defaultConfiguration: IServerConfiguration = {
-    port: 3000,
-    host: ip.address(),
+    port: 5000,
+    host: '0.0.0.0',
     bodyParser: bodyParser.json,
     networkLogs: false,
     proxyHops: 0,

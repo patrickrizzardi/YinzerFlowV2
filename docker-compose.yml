@@ -5,10 +5,9 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-      - /home/patrick/.npmrc:/home/node/.npmrc
     ports:
       - "5000:5000"
-    command: sh -c "bun install && bun start:dev"
+    command: sh -c "bun install && bun start:example"
     tty: true
     stdin_open: true
     networks:

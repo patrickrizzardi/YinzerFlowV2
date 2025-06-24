@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'bun:test';
-import ip from 'ip';
-import { handleCustomConfiguration } from '@core/setup/handleCustomConfiguration.ts';
+import { handleCustomConfiguration } from '@core/setup/utils/handleCustomConfiguration.ts';
 
 describe('YinzerFlow', () => {
   it('should return a default configuration', () => {
     const config = handleCustomConfiguration({});
     expect(config).toBeDefined();
-    expect(config.port).toBe(3000);
-    expect(config.host).toBe(ip.address());
+    expect(config.port).toBe(5000);
+    expect(config.host).toBe('0.0.0.0');
     expect(config.bodyParser).toBe('json');
     expect(config.networkLogs).toBe(false);
     expect(config.proxyHops).toBe(0);
@@ -15,12 +14,12 @@ describe('YinzerFlow', () => {
 
   it('should return a custom configuration with the default values', () => {
     const config = handleCustomConfiguration({
-      port: 5000,
+      port: 3000,
       bodyParser: 'text',
     });
 
-    expect(config.port).toBe(5000);
-    expect(config.host).toBe(ip.address());
+    expect(config.port).toBe(3000);
+    expect(config.host).toBe('0.0.0.0');
     expect(config.bodyParser).toBe('text');
     expect(config.networkLogs).toBe(false);
     expect(config.proxyHops).toBe(0);

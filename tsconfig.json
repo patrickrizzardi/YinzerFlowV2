@@ -26,7 +26,8 @@
       "@example/*": ["./example/*"],
       "@core/*": ["./app/core/*"],
       "@constants/*": ["./app/constants/*"],
-      "@typedefs/*": ["./app/typedefs/*"]
+      "@typedefs/*": ["./app/typedefs/*"],
+      "@utils/*": ["./app/utils/*"]
     },
     "sourceMap": false,
     "removeComments": true,

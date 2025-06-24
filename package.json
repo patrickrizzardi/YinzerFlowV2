@@ -31,7 +31,6 @@
     "clean": "rm -rf lib && rm -rf storage && echo 'Done.'",
     "build": "bun clean; bun build.ts",
     "start:example": "bun --watch example/index.ts",
-    "start:dev": "bun --watch local/index.ts",
     "lint": "eslint . --fix --quiet --color --cache",
     "lint:format": "prettier --check .",
     "lint:spelling": "cspell . --no-progress --unique",
@@ -40,7 +39,6 @@
     "find-unused-packages": "bunx depcheck --quiet --ignores=cspell,eslint-import-resolver-typescript --skip-missing"
   },
   "dependencies": {
-    "ip": "^2.0.1"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.7",
