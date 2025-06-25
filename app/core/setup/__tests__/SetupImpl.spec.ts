@@ -1,41 +1,41 @@
 import { describe, expect, it } from 'bun:test';
 import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
-import { Setup } from '@core/setup/Setup.ts';
-import type { ContextImpl } from '@typedefs/core/Context.js';
+import { SetupImpl } from '@core/setup/Setup.ts';
+import type { ContextImpl } from '@core/execution/ContextImpl.ts';
 
 describe('Setup', () => {
   // Configurations are tested in handleCustomConfiguration.spec.ts
 
   it('should register routes of each http method', () => {
-    const setup = new Setup();
+    const setup = new SetupImpl();
     setup.get('/', () => {}, { beforeHooks: [() => {}], afterHooks: [() => {}] });
     setup.post('/', () => {});
     setup.put('/', () => {});
     setup.patch('/', () => {});
     setup.delete('/', () => {});
     setup.options('/', () => {});
-    expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/')).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/')?.route.options?.beforeHooks).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/')?.route.options?.afterHooks).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.post, '/')).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.put, '/')).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.patch, '/')).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.delete, '/')).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.options, '/')).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.get, '/')).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.get, '/')?.route.options.beforeHooks).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.get, '/')?.route.options.afterHooks).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.post, '/')).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.put, '/')).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.patch, '/')).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.delete, '/')).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.options, '/')).toBeDefined();
   });
 
   it('should register a group of routes', () => {
-    const setup = new Setup();
+    const setup = new SetupImpl();
     setup.group('/api', (group) => {
       group.get('/users', () => {});
       group.post('/users', () => {});
     });
-    expect(setup.getRouteRegistry().findRoute(httpMethod.get, '/api/users')).toBeDefined();
-    expect(setup.getRouteRegistry().findRoute(httpMethod.post, '/api/users')).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.get, '/api/users')).toBeDefined();
+    expect(setup._routeRegistry.findRoute(httpMethod.post, '/api/users')).toBeDefined();
   });
 
   it('should merge group and route hooks in correct execution order', () => {
-    const setup = new Setup();
+    const setup = new SetupImpl();
     const executionOrder: Array<string> = [];
 
     const groupBeforeHook = () => executionOrder.push('beforeGroup');
@@ -57,34 +57,34 @@ describe('Setup', () => {
       },
     );
 
-    const routeMatch = setup.getRouteRegistry().findRoute(httpMethod.get, '/api/users');
+    const routeMatch = setup._routeRegistry.findRoute(httpMethod.get, '/api/users');
 
     // Should be: [groupBefore, routeBefore]
-    expect(routeMatch?.route.options?.beforeHooks).toEqual([groupBeforeHook, routeBeforeHook]);
+    expect(routeMatch?.route.options.beforeHooks).toEqual([groupBeforeHook, routeBeforeHook]);
 
     // Should be: [routeAfter, groupAfter]
-    expect(routeMatch?.route.options?.afterHooks).toEqual([routeAfterHook, groupAfterHook]);
+    expect(routeMatch?.route.options.afterHooks).toEqual([routeAfterHook, groupAfterHook]);
   });
 
   it('should have beforeAll and afterAll hooks', () => {
-    const setup = new Setup();
+    const setup = new SetupImpl();
     const beforeAllHook = () => {};
     const beforeAllHook2 = () => true;
     const afterAllHook = () => {};
     const afterAllHook2 = () => true;
-    setup.beforeAll(beforeAllHook, {});
-    setup.beforeAll(beforeAllHook2, { routesToExclude: ['/api/users'] });
-    setup.afterAll(afterAllHook, {});
-    setup.afterAll(afterAllHook2, { routesToInclude: ['/api/users'] });
-    expect(setup.getHooks().beforeAll.size).toBe(2);
-    expect(setup.getHooks().afterAll.size).toBe(2);
-    expect(setup.getHooks().beforeAll).toEqual(
+    setup.beforeAll([beforeAllHook], {});
+    setup.beforeAll([beforeAllHook2], { routesToExclude: ['/api/users'] });
+    setup.afterAll([afterAllHook], {});
+    setup.afterAll([afterAllHook2], { routesToInclude: ['/api/users'] });
+    expect(setup._hooks._beforeAll.size).toBe(2);
+    expect(setup._hooks._afterAll.size).toBe(2);
+    expect(setup._hooks._beforeAll).toEqual(
       new Set([
         { handler: beforeAllHook, options: {} },
         { handler: beforeAllHook2, options: { routesToExclude: ['/api/users'] } },
       ]),
     );
-    expect(setup.getHooks().afterAll).toEqual(
+    expect(setup._hooks._afterAll).toEqual(
       new Set([
         { handler: afterAllHook, options: {} },
         { handler: afterAllHook2, options: { routesToInclude: ['/api/users'] } },
@@ -93,15 +93,14 @@ describe('Setup', () => {
   });
 
   it('should have onError hook', () => {
-    const setup = new Setup();
-    expect(setup.getHooks().onError).toBeDefined();
-    expect(setup.getHooks().onError).toBeInstanceOf(Function);
+    const setup = new SetupImpl();
+    expect(setup._hooks._onError).toBeDefined();
+    expect(setup._hooks._onError).toBeInstanceOf(Function);
   });
 
   it('should override onError hook', () => {
-    const setup = new Setup();
-    const onErrorHook = (ctx: ContextImpl) => {
-      console.error(ctx.response.body);
+    const setup = new SetupImpl();
+    const onErrorHook = () => {
       return {
         statusCode: httpStatusCode.internalServerError,
         status: httpStatus.internalServerError,
@@ -110,6 +109,6 @@ describe('Setup', () => {
       };
     };
     setup.onError(onErrorHook);
-    expect(setup.getHooks().onError).toEqual(onErrorHook);
+    expect(setup._hooks._onError).toEqual(onErrorHook);
   });
 });

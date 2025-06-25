@@ -13,7 +13,6 @@ export const handleCustomConfiguration = (configuration?: IServerConfiguration):
   const defaultConfiguration: IServerConfiguration = {
     port: 5000,
     host: '0.0.0.0',
-    rawBody: false,
     networkLogs: false,
     proxyHops: 0,
     connectionOptions: {
