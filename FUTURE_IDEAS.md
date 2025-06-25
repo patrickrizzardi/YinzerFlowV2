@@ -447,22 +447,22 @@ private async _handleError(request: Request, error: unknown): Promise<Response> 
 
 Current implementation:
 ```typescript
-async processBeforeAll(route: IRoute, ctx: Context): Promise<TResponseBody<unknown> | void> {
+async processBeforeAll(route: IRoute, ctx: Context): Promise<unknown<unknown> | void> {
   // Implementation
 }
 
-async processBeforeGroup(route: IRoute, ctx: Context): Promise<TResponseBody<unknown> | void> {
+async processBeforeGroup(route: IRoute, ctx: Context): Promise<unknown<unknown> | void> {
   // Implementation
 }
 
-async processBeforeHandler(route: IRoute, ctx: Context): Promise<TResponseBody<unknown> | void> {
+async processBeforeHandler(route: IRoute, ctx: Context): Promise<unknown<unknown> | void> {
   // Implementation
 }
 ```
 
 Optimized implementation:
 ```typescript
-async processHooks(phase: HookPhase, route: IRoute, ctx: Context): Promise<TResponseBody<unknown> | void> {
+async processHooks(phase: HookPhase, route: IRoute, ctx: Context): Promise<unknown<unknown> | void> {
   switch (phase) {
     case HookPhase.BEFORE_ALL:
       const { BeforeAllProcessor } = await import('./hooks/BeforeAllProcessor.js');
@@ -476,7 +476,7 @@ async processHooks(phase: HookPhase, route: IRoute, ctx: Context): Promise<TResp
 
 Current implementation:
 ```typescript
-private _formatResponseBody(body: TResponseBody<unknown>): string {
+private _formaunknown(body: unknown<unknown>): string {
   // Handle null explicitly
   if (body === null) return 'null';
 
@@ -494,7 +494,7 @@ private _formatResponseBody(body: TResponseBody<unknown>): string {
 
 Optimized implementation:
 ```typescript
-private async _formatResponseBody(body: TResponseBody<unknown>, options?: FormatOptions): Promise<string> {
+private async _formaunknown(body: unknown<unknown>, options?: FormatOptions): Promise<string> {
   if (body === null) return 'null';
   
   if (typeof body === 'object') {

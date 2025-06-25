@@ -1,76 +1,70 @@
-import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
+import { httpMethod } from '@constants/http.ts';
 import type { THttpMethod } from '@typedefs/constants/http.ts';
 import { RouteRegistry } from '@core/setup/RouteRegistry.ts';
-import type { ContextBuilder, TResponseBody, TResponseFunction } from '@typedefs/core/Context.js';
-import type { IRoute } from '@typedefs/core/setup/RouteRegistry.js';
-import type { IGroup, IHookOptions, IHookRegistry, TAfterHookResponse, TBeforeHookResponse } from '@typedefs/core/setup/Setup.js';
 import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
 import { handleCustomConfiguration } from '@core/setup/utils/handleCustomConfiguration.ts';
+import type { Setup } from '@typedefs/public/Setup.js';
+import type { ResponseFunctionResolved, RouteRegistryOptionsResolved, UndefinedResponseFunctionResolved } from '@typedefs/internal/RouteRegistryResolved.js';
+import type { SetupMethodResolved } from '@typedefs/internal/SetupResolved.ts';
+import { HookRegistry } from '@core/execution/HookRegistry.ts';
+import type { GlobalHookOptionsResolved } from '@typedefs/internal/HookRegistry.js';
 
-export class Setup {
-  private readonly configuration: IServerConfiguration;
-  private readonly routeRegistry = new RouteRegistry();
-  private readonly hooks: IHookRegistry = {
-    beforeAll: new Set(),
-    afterAll: new Set(),
-    onError: (ctx: ContextBuilder): TResponseBody => {
-      ctx.response.setStatusCode(500);
-      return {
-        success: false,
-        message: 'Internal Server Error',
-      };
-    },
-  };
+export class SetupImpl implements Setup {
+  readonly _configuration: IServerConfiguration;
+  readonly _routeRegistry = new RouteRegistry();
+  readonly _hooks = new HookRegistry();
 
   constructor(customConfiguration?: IServerConfiguration) {
-    this.configuration = handleCustomConfiguration(customConfiguration);
+    this._configuration = handleCustomConfiguration(customConfiguration);
   }
 
   //   ===== Route Registration =====
-  get(path: string, handler: IRoute['handler'], options?: IRoute['options']): void {
-    this.routeRegistry.register({ method: httpMethod.get, handler, path, options });
+  get(path: string, handler: ResponseFunctionResolved, options?: RouteRegistryOptionsResolved): void {
+    this._routeRegistry.register({ method: httpMethod.get, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
   }
 
-  post(path: string, handler: IRoute['handler'], options?: IRoute['options']): void {
-    this.routeRegistry.register({ method: httpMethod.post, handler, path, options });
+  post(path: string, handler: ResponseFunctionResolved, options?: RouteRegistryOptionsResolved): void {
+    this._routeRegistry.register({ method: httpMethod.post, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
   }
 
-  put(path: string, handler: IRoute['handler'], options?: IRoute['options']): void {
-    this.routeRegistry.register({ method: httpMethod.put, handler, path, options });
+  put(path: string, handler: ResponseFunctionResolved, options?: RouteRegistryOptionsResolved): void {
+    this._routeRegistry.register({ method: httpMethod.put, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
   }
 
-  patch(path: string, handler: IRoute['handler'], options?: IRoute['options']): void {
-    this.routeRegistry.register({ method: httpMethod.patch, handler, path, options });
+  patch(path: string, handler: ResponseFunctionResolved, options?: RouteRegistryOptionsResolved): void {
+    this._routeRegistry.register({ method: httpMethod.patch, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
   }
 
-  delete(path: string, handler: IRoute['handler'], options?: IRoute['options']): void {
-    this.routeRegistry.register({ method: httpMethod.delete, handler, path, options });
+  delete(path: string, handler: ResponseFunctionResolved, options?: RouteRegistryOptionsResolved): void {
+    this._routeRegistry.register({ method: httpMethod.delete, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
   }
 
-  options(path: string, handler: IRoute['handler'], options?: IRoute['options']): void {
-    this.routeRegistry.register({ method: httpMethod.options, handler, path, options });
+  options(path: string, handler: ResponseFunctionResolved, options?: RouteRegistryOptionsResolved): void {
+    this._routeRegistry.register({ method: httpMethod.options, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
   }
 
-  group(prefix: string, callback: (group: IGroup) => void, options?: IRoute['options']): void {
+  group(
+    prefix: string,
+    callback: (group: Record<Lowercase<THttpMethod>, SetupMethodResolved>) => void,
+    options?: RouteRegistryOptionsResolved, // These follow the same pattern as the individual route registration methods
+  ): void {
     const createRouteHandler =
       (method: THttpMethod) =>
-      (path: string, handler: IRoute['handler'], routeOptions?: IRoute['options']): void => {
+      (path: string, handler: ResponseFunctionResolved, routeOptions?: RouteRegistryOptionsResolved): void => {
         const fullPath = `${prefix}${path}`;
-        this.routeRegistry.register({
+        this._routeRegistry.register({
           method,
           handler,
           path: fullPath,
           options: {
             beforeHooks: [...(options?.beforeHooks ?? []), ...(routeOptions?.beforeHooks ?? [])],
             afterHooks: [...(routeOptions?.afterHooks ?? []), ...(options?.afterHooks ?? [])],
-            ...(routeOptions?.rawBody !== undefined && { rawBody: routeOptions.rawBody }),
-            ...(routeOptions?.rawBody === undefined && options?.rawBody !== undefined && { rawBody: options.rawBody }),
           },
         });
       };
 
     // Create a group app that registers routes with prefix and group hooks
-    const group: IGroup = {
+    const group = {
       get: createRouteHandler(httpMethod.get),
       post: createRouteHandler(httpMethod.post),
       put: createRouteHandler(httpMethod.put),
@@ -92,57 +86,15 @@ export class Setup {
    * allowing for more flexibility to include hook modification, conditional
    * hook execution, and better debugging.
    */
-  beforeAll(handler: TBeforeHookResponse, options?: IHookOptions): void {
-    this.hooks.beforeAll.add({ handler, options });
+  beforeAll(handlers: Array<ResponseFunctionResolved | UndefinedResponseFunctionResolved>, options?: GlobalHookOptionsResolved): void {
+    this._hooks._addBeforeHooks(handlers, options);
   }
 
-  afterAll(handler: TAfterHookResponse, options?: IHookOptions): void {
-    this.hooks.afterAll.add({ handler, options });
+  afterAll(handlers: Array<ResponseFunctionResolved>, options?: GlobalHookOptionsResolved): void {
+    this._hooks._addAfterHooks(handlers, options);
   }
 
-  /**
-   * Error Handling
-   */
-  onError(handler: TResponseFunction): void {
-    this.hooks.onError = handler;
-  }
-
-  /**
-   * @internal
-   * Get the route registry
-   *
-   * @example
-   * ```typescript
-   * const routeRegistry = setup.getRouteRegistry();
-   * ```
-   */
-  getRouteRegistry(): RouteRegistry {
-    return this.routeRegistry;
-  }
-
-  /**
-   * @internal
-   * Get the hooks
-   *
-   * @example
-   * ```typescript
-   * const hooks = setup.getHooks();
-   * ```
-   */
-  getHooks(): IHookRegistry {
-    return this.hooks;
-  }
-
-  /**
-   * @internal
-   * Get the configuration
-   *
-   * @example
-   * ```typescript
-   * const configuration = setup.getConfiguration();
-   * ```
-   */
-  getConfiguration(): IServerConfiguration {
-    return this.configuration;
+  onError(handler: ResponseFunctionResolved): void {
+    this._hooks._addOnError(handler);
   }
 }

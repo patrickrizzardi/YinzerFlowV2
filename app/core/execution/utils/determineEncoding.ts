@@ -1,5 +1,3 @@
-import type { TResponseBody } from '@typedefs/core/Context.js';
-
 /**
  * Common binary file signatures (magic numbers)
  * Used for detecting file types when Content-Type header is missing
@@ -86,7 +84,7 @@ const validateSpecialSignatures = (buffer: Buffer): boolean => {
  * Determine the appropriate encoding based on Content-Type header
  * Falls back to content inspection if no header is present
  */
-export const determineEncoding = (contentType?: string, body?: TResponseBody): 'base64' | 'binary' | 'utf8' => {
+export const determineEncoding = (contentType?: string, body?: unknown): 'base64' | 'binary' | 'utf8' => {
   if (!contentType) {
     // No content-type header, infer from body content
     return inferEncodingFromBody(body);
@@ -124,7 +122,7 @@ export const determineEncoding = (contentType?: string, body?: TResponseBody): '
 /**
  * Infer encoding when no Content-Type header is present
  */
-export const inferEncodingFromBody = (body?: TResponseBody): 'base64' | 'binary' | 'utf8' => {
+export const inferEncodingFromBody = (body?: unknown): 'base64' | 'binary' | 'utf8' => {
   // If it's a Buffer, check for binary signatures
   if (Buffer.isBuffer(body)) {
     return detectBinaryFormat(body) ? 'base64' : 'utf8';

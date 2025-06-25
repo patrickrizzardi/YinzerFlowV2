@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
 import { Setup } from '@core/setup/Setup.ts';
-import type { ContextBuilder } from '@typedefs/core/Context.js';
+import type { ContextImpl } from '@typedefs/core/Context.js';
 
 describe('Setup', () => {
   // Configurations are tested in handleCustomConfiguration.spec.ts
@@ -100,7 +100,7 @@ describe('Setup', () => {
 
   it('should override onError hook', () => {
     const setup = new Setup();
-    const onErrorHook = (ctx: ContextBuilder) => {
+    const onErrorHook = (ctx: ContextImpl) => {
       console.error(ctx.response.body);
       return {
         statusCode: httpStatusCode.internalServerError,

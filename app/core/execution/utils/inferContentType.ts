@@ -1,6 +1,5 @@
 import { determineEncoding } from './determineEncoding.ts';
 import { contentType } from '@constants/http.ts';
-import type { TResponseBody } from '@typedefs/core/Context.js';
 
 // =============================================================================
 // JSON Detection
@@ -120,7 +119,7 @@ export const inferContentTypeFromString = (body: string): string => {
  * @param body - Response body of any supported type
  * @returns Detected content type
  */
-export const inferContentType = (body: TResponseBody): string => {
+export const inferContentType = (body: unknown): string => {
   // Handle null/undefined
   if (body === null || body === undefined) {
     return 'text/plain';

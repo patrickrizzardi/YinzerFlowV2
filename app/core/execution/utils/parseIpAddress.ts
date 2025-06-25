@@ -1,4 +1,4 @@
-import type { Setup } from '@core/setup/Setup.ts';
+import type { SetupImpl } from '@core/setup/Setup.ts';
 import type { THttpHeaders } from '@typedefs/constants/http.js';
 
 /**
@@ -10,8 +10,8 @@ import type { THttpHeaders } from '@typedefs/constants/http.js';
  * // Returns '192.168.1.1'
  * ```
  */
-export const parseIpAddress = (setup: Setup, headers: Partial<Record<THttpHeaders, string>>): string => {
-  const { proxyHops } = setup.getConfiguration();
+export const parseIpAddress = (setup: SetupImpl, headers: Partial<Record<THttpHeaders, string>>): string => {
+  const { proxyHops } = setup._configuration;
   if (!proxyHops || proxyHops === 0) return headers['x-forwarded-for'] ?? '';
 
   if (proxyHops < 0) return '';

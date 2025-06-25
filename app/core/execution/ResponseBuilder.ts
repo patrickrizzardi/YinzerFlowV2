@@ -2,97 +2,49 @@ import { formatBodyIntoString } from '@core/execution/utils/formatBodyIntoString
 import { determineEncoding } from '@core/execution/utils/determineEncoding.ts';
 import { inferContentType } from '@core/execution/utils/inferContentType.ts';
 import { mapStatusCodeToMessage } from '@core/execution/utils/mapStatusCodeToMessage.ts';
-import type { IRequest, IResponse, TResponseBody } from '@typedefs/core/Context.js';
-import type { IResponseBuilder } from '@typedefs/core/execution/ResponseBuilder.js';
 import { httpStatus, httpStatusCode } from '@constants/http.ts';
-import type { THttpHeaders, THttpStatusCode } from '@typedefs/constants/http.js';
+import type { THttpHeaders, THttpStatus, THttpStatusCode } from '@typedefs/constants/http.js';
+import type { Request } from '@typedefs/public/Request.ts';
+import type { ResponseResolved } from '@typedefs/internal/ResponseResolved.js';
 
-export class ResponseBuilder implements IResponseBuilder {
-  private readonly formattedResponse: IResponse;
-  private readonly request: IRequest;
+export class ResponseBuilder implements ResponseResolved {
+  private readonly request: Request;
 
-  constructor(request: IRequest) {
+  statusCode: THttpStatusCode;
+  status: THttpStatus;
+  headers: Partial<Record<THttpHeaders, string>>;
+  body: unknown;
+
+  constructor(request: Request) {
     this.request = request;
-    this.formattedResponse = {
-      statusCode: httpStatusCode.ok,
-      status: httpStatus.ok,
-      headers: {},
-      body: '',
-    };
+
+    this.statusCode = httpStatusCode.ok;
+    this.status = httpStatus.ok;
+    this.headers = {};
+    this.body = '';
   }
 
-  /**
-   * @internal
-   * Build the raw response
-   * This is the standard HTTP response format that will be sent to the client.
-   *
-   * @example
-   * ```typescript
-   * const rawResponse = builder.buildRawResponse(request);
-   * ```
-   */
-  private buildRawResponse(request: IRequest): string {
+  _parseResponseIntoString(): string {
     // Example: HTTP/1.1 200 OK
-    const statusLine = `${request.protocol} ${this.formattedResponse.statusCode} ${this.formattedResponse.status}`;
+    const statusLine = `${this.request.protocol} ${this.statusCode} ${this.status}`;
 
     // Example: Content-Type: text/html
-    const headerLines = Object.entries(this.formattedResponse.headers).map(([key, value]) => `${key}: ${value}`);
+    const headerLines = Object.entries(this.headers).map(([key, value]) => `${key}: ${value}`);
 
     // Determine encoding based on Content-Type header and body content
-    const encoding = determineEncoding(this.formattedResponse.headers['content-type'], this.formattedResponse.body);
+    const encoding = determineEncoding(this.headers['content-type'], this.body);
 
     // Example: <html><body><h1>Hello, world!</h1></body></html> or { "message": "Hello, world!" }
-    const body = formatBodyIntoString(this.formattedResponse.body, { encoding });
+    const body = formatBodyIntoString(this.body, { encoding });
 
     // Example: HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html><body><h1>Hello, world!</h1></body></html>
     return `${statusLine}\n${headerLines.join('\n')}\n\n${body}`;
   }
 
-  /**
-   * @internal
-   * This is the raw response that will be sent to the client.
-   *
-   * @example
-   * ```typescript
-   * const rawResponse = builder.getRawResponse();
-   * ```
-   */
-  getRawResponse(): string {
-    return this.buildRawResponse(this.request);
-  }
-
-  /**
-   * @internal
-   * Get the formatted response
-   *
-   * @example
-   * ```typescript
-   * const formattedResponse = builder.getFormattedResponse();
-   * ```
-   */
-  getFormattedResponse(): IResponse {
-    return this.formattedResponse;
-  }
-
-  /**
-   * @internal
-   * Add headers only if they don't already exist
-   * Use when you want to provide defaults without overriding user-set headers.
-   * This will typically be used by the framework to set default headers.
-   *
-   * @example
-   * ```typescript
-   * // Set default headers that user can override
-   * builder.setHeadersIfNotSet({
-   *   'cache-control': 'public, max-age=3600',
-   *   'x-powered-by': 'YinzerFlow'
-   * });
-   * ```
-   */
-  setHeadersIfNotSet(headers: Partial<Record<THttpHeaders, string>>): void {
+  private _setHeadersIfNotSet(headers: Partial<Record<THttpHeaders, string>>): void {
     for (const [key, value] of Object.entries(headers)) {
-      if (!(key in this.formattedResponse.headers)) {
-        this.formattedResponse.headers[key] = value;
+      if (!(key in this.headers)) {
+        this.headers[key] = value;
       }
     }
   }
@@ -116,13 +68,13 @@ export class ResponseBuilder implements IResponseBuilder {
    * builder.setBody(imageBuffer);
    * ```
    */
-  setBody(body: TResponseBody): void {
-    this.formattedResponse.body = body;
+  _setBody(body: unknown): void {
+    this.body = body;
 
     // Auto-set content-type if not already set
-    if (!this.formattedResponse.headers['content-type']) {
+    if (!this.headers['content-type']) {
       const detectedContentType = inferContentType(body);
-      this.setHeadersIfNotSet({
+      this._setHeadersIfNotSet({
         'content-type': detectedContentType,
       });
     }
@@ -138,8 +90,8 @@ export class ResponseBuilder implements IResponseBuilder {
    * ```
    */
   setStatusCode(statusCode: THttpStatusCode): void {
-    this.formattedResponse.statusCode = statusCode;
-    this.formattedResponse.status = mapStatusCodeToMessage(statusCode);
+    this.statusCode = statusCode;
+    this.status = mapStatusCodeToMessage(statusCode);
   }
 
   /**
@@ -160,7 +112,7 @@ export class ResponseBuilder implements IResponseBuilder {
    * ```
    */
   addHeaders(headers: Partial<Record<THttpHeaders, string>>): void {
-    this.formattedResponse.headers = { ...this.formattedResponse.headers, ...headers };
+    this.headers = { ...this.headers, ...headers };
   }
 
   /**
@@ -177,7 +129,7 @@ export class ResponseBuilder implements IResponseBuilder {
    */
   removeHeaders(headerNames: Array<THttpHeaders>): void {
     for (const headerName of headerNames) {
-      delete this.formattedResponse.headers[headerName];
+      delete this.headers[headerName];
     }
   }
 }

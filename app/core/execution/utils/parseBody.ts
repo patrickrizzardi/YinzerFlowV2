@@ -1,7 +1,6 @@
 import { parseApplicationJson } from './parseJson.ts';
 import { parseMultipartFormData } from './parseMultipart.ts';
 import { contentType } from '@constants/http.ts';
-import type { TRequestBody } from '@typedefs/core/Context.ts';
 
 import { parseUrlEncodedForm } from '@core/execution/utils/parseUrlEncodedForm.ts';
 import type { TContentType } from '@typedefs/constants/http.js';
@@ -22,7 +21,7 @@ import { inferContentTypeFromString } from '@core/execution/utils/inferContentTy
  * @returns Parsed body in appropriate format
  * @throws Error if Content-Type is missing or parsing fails
  */
-export const parseBody = (body: string, headerContentType?: TContentType, boundary?: string): TRequestBody => {
+export const parseBody = (body: string, headerContentType?: TContentType, boundary?: string): unknown => {
   // Handle empty body
   if (!body || !body.trim()) {
     return undefined;

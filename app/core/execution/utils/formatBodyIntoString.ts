@@ -1,5 +1,3 @@
-import type { TResponseBody } from '@typedefs/core/Context.js';
-
 /**
  * Format the body into a string for HTTP response transmission
  *
@@ -28,7 +26,7 @@ import type { TResponseBody } from '@typedefs/core/Context.js';
  * // base64Body === '/9j/' (base64 encoded)
  * ```
  */
-export const formatBodyIntoString = (body: TResponseBody, options?: { encoding?: 'base64' | 'binary' | 'utf8' }): string => {
+export const formatBodyIntoString = (body: unknown, options?: { encoding?: 'base64' | 'binary' | 'utf8' }): string => {
   const encoding = options?.encoding ?? 'utf8';
 
   // Handle null/undefined
@@ -66,7 +64,7 @@ const handleArrayBuffer = (body: ArrayBuffer, encoding: 'base64' | 'binary' | 'u
   return handleBuffer(buffer, encoding);
 };
 
-const handleObjectsAndArrays = (body: TResponseBody): string => {
+const handleObjectsAndArrays = (body: unknown): string => {
   try {
     return JSON.stringify(body);
   } catch (_) {

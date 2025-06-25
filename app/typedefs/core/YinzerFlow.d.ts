@@ -52,13 +52,7 @@ export interface IServerConfiguration {
   host?: string;
 
   //   corsOptions: CorsOptions;
-  /**
-   * Return the raw request body
-   * @default false
-   * This is useful for when you need to parse the raw request body.
-   * YinzerFlow typically parses the request body for you, but if you need the raw body, you can set this to true.
-   */
-  rawBody?: boolean;
+
 
   /**
    * Verbose network logs
