@@ -1,5 +1,5 @@
 import { RequestImpl } from '@core/execution/RequestImpl.ts';
-import { ResponseBuilderImpl } from '@core/execution/ResponseBuilderImpl.ts';
+import { ResponseImpl } from '@core/execution/ResponseImpl.ts';
 import type { SetupImpl } from '@core/setup/SetupImpl.ts';
 import type { InternalContextImpl } from '@typedefs/internal/InternalContextImpl.ts';
 import type { InternalRequestImpl } from '@typedefs/internal/InternalRequestImpl.js';
@@ -20,7 +20,7 @@ export class ContextImpl implements InternalContextImpl {
 
   constructor(rawRequest: Buffer | string, setup: SetupImpl) {
     this._request = new RequestImpl(rawRequest, setup);
-    this._response = new ResponseBuilderImpl(this._request);
+    this._response = new ResponseImpl(this._request);
 
     this.request = this._request;
     this.response = this._response;

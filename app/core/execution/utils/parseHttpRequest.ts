@@ -17,18 +17,37 @@ export const parseHttpRequest = (request: string): { method: THttpMethod; path: 
    * - The first line contains the request method, path, and protocol
    * - The headers are separated from the body by two newlines
    */
+
+  // Handle empty or malformed requests gracefully
+  if (!request || !request.trim()) {
+    return {
+      method: 'GET' as THttpMethod,
+      path: '/',
+      protocol: 'HTTP/1.1',
+      headersRaw: '',
+      rawBody: '',
+    };
+  }
+
   const [firstLine, rest] = divideString(request, '\r\n');
   const [method, path, protocol] = firstLine.split(' ', 3);
   const [headersRaw, rawBody] = divideString(rest, '\r\n\r\n');
 
+  // Validate method and provide fallback
   if (!method || !Object.values(httpMethod).includes(method as THttpMethod)) {
-    throw new Error(`Invalid HTTP method: ${method}`);
+    return {
+      method: 'GET' as THttpMethod,
+      path: path ?? '/',
+      protocol: protocol ?? 'HTTP/1.1',
+      headersRaw,
+      rawBody,
+    };
   }
 
   return {
     method: method as THttpMethod,
-    path: path ?? '',
-    protocol: protocol ?? '',
+    path: path ?? '/',
+    protocol: protocol ?? 'HTTP/1.1',
     headersRaw,
     rawBody,
   };

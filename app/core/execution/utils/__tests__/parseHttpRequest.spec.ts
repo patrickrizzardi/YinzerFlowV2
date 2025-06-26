@@ -197,16 +197,28 @@ describe('parseHttpRequest', () => {
       expect(result.rawBody).toBe('\r\nbody with extra newlines');
     });
 
-    it('should throw error for invalid HTTP method', () => {
+    it('should handle invalid HTTP method gracefully by defaulting to GET', () => {
       const rawRequest = 'INVALID /test HTTP/1.1\r\nHost: example.com\r\n\r\nbody';
 
-      expect(() => parseHttpRequest(rawRequest)).toThrow('Invalid HTTP method: INVALID');
+      const result = parseHttpRequest(rawRequest);
+
+      expect(result.method).toBe('GET');
+      expect(result.path).toBe('/test');
+      expect(result.protocol).toBe('HTTP/1.1');
+      expect(result.headersRaw).toBe('Host: example.com');
+      expect(result.rawBody).toBe('body');
     });
 
-    it('should throw error for malformed request line with no method', () => {
+    it('should handle malformed request line with no method gracefully', () => {
       const rawRequest = '\r\nHost: example.com\r\n\r\nbody';
 
-      expect(() => parseHttpRequest(rawRequest)).toThrow('Invalid HTTP method:');
+      const result = parseHttpRequest(rawRequest);
+
+      expect(result.method).toBe('GET');
+      expect(result.path).toBe('/');
+      expect(result.protocol).toBe('HTTP/1.1');
+      expect(result.headersRaw).toBe('Host: example.com');
+      expect(result.rawBody).toBe('body');
     });
 
     it('should handle request with body containing header-like content', () => {

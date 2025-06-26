@@ -91,6 +91,7 @@ describe('Setup', () => {
     );
   });
 
+
   it('should have onError hook', () => {
     const setup = new SetupImpl();
     expect(setup._hooks._onError).toBeDefined();
@@ -109,5 +110,25 @@ describe('Setup', () => {
     };
     setup.onError(onErrorHook);
     expect(setup._hooks._onError).toEqual(onErrorHook);
+  });
+
+  it('should have onNotFound hook', () => {
+    const setup = new SetupImpl();
+    expect(setup._hooks._onNotFound).toBeDefined();
+    expect(setup._hooks._onNotFound).toBeInstanceOf(Function);
+  });
+
+  it('should override onNotFound hook', () => {
+    const setup = new SetupImpl();
+    const onNotFoundHook = () => {
+      return {
+        statusCode: httpStatusCode.notFound,
+        status: httpStatus.notFound,
+        headers: {},
+        body: 'This is a custom onNotFound hook',
+      };
+    };
+    setup.onNotFound(onNotFoundHook);
+    expect(setup._hooks._onNotFound).toEqual(onNotFoundHook);
   });
 });

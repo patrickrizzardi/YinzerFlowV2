@@ -7,7 +7,7 @@ import type { THttpHeaders, THttpStatus, THttpStatusCode } from '@typedefs/const
 import type { Request } from '@typedefs/public/Request.ts';
 import type { InternalResponseImpl } from '@typedefs/internal/InternalResponseImpl.d.ts';
 
-export class ResponseBuilderImpl implements InternalResponseImpl {
+export class ResponseImpl implements InternalResponseImpl {
   readonly _request: Request;
 
   _statusCode: THttpStatusCode = httpStatusCode.ok;

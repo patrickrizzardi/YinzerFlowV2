@@ -1,6 +1,6 @@
 import { createServer } from 'net';
 
-import { RequestHandler } from '@core/execution/RequestHandlerImpl.ts';
+import { RequestHandlerImpl } from '@core/execution/RequestHandlerImpl.ts';
 import { ContextImpl } from '@core/execution/ContextImpl.ts';
 import { SetupImpl } from '@core/setup/SetupImpl.ts';
 
@@ -14,7 +14,7 @@ export class YinzerFlow extends SetupImpl {
   async listen(): Promise<void> {
     return new Promise((resolve, reject) => {
       // Create request handler once per listening session
-      const requestHandler = new RequestHandler(this);
+      const requestHandler = new RequestHandlerImpl(this);
 
       this._server = createServer();
 

@@ -93,11 +93,14 @@ describe('RequestImpl', () => {
   });
 
   describe('Error handling', () => {
-    it('should throw error for invalid HTTP methods', () => {
+    it('should handle invalid HTTP methods gracefully by defaulting to GET', () => {
       const rawRequest = createRawRequest('INVALID /test HTTP/1.1\r\nHost: example.com\r\n\r\n');
       const setup = new SetupImpl();
 
-      expect(() => new RequestImpl(rawRequest, setup)).toThrow('Invalid HTTP method: INVALID');
+      const request = new RequestImpl(rawRequest, setup);
+      expect(request.method).toBe('GET');
+      expect(request.path).toBe('/test');
+      expect(request.protocol).toBe('HTTP/1.1');
     });
   });
 });

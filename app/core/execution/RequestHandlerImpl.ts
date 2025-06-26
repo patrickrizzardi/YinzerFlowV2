@@ -11,7 +11,7 @@ import type { InternalSetupImpl } from '@typedefs/internal/InternalSetupImpl.js'
  * 3. Build final response in context
  * 4. Context.rawResponse is ready for sending
  */
-export class RequestHandler {
+export class RequestHandlerImpl {
   private readonly setup: InternalSetupImpl;
 
   constructor(setup: SetupImpl) {
