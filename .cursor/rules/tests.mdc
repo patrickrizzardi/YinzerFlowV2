@@ -66,7 +66,8 @@ const mockHttpClient: jest.Mocked<HttpClient> = {
 - **Group related functionality**: Use nested `describe` blocks to organize tests by feature or component (e.g., "ErrorHandler" → "when handling validation errors" → "should return 400 status")
 - Use `describe` blocks for classes/modules and nested `describe` or `context` for different scenarios
 - Use clear, descriptive test names that explain the expected behavior
-- Keep test files co-located or mirror the source structure (e.g., `src/utils/parser.ts` → `tests/utils/parser.test.ts`)
+- **File naming**: Always use `.spec.ts` extension for test files (e.g., `src/utils/parser.ts` → `tests/utils/parser.spec.ts`)
+- Keep test files co-located or mirror the source structure
 - Group related assertions within single tests when they test the same behavior
 
 ### Data Management and Reusability

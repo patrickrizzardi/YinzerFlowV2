@@ -28,6 +28,28 @@ if (!existsSync('lib')) {
   console.log('Created output directory.');
 }
 
+// Run tests and ensure coverage is 95%
+console.log('Running tests and ensuring coverage is 95%...');
+try {
+  execSync('bun test --coverage --coverage-threshold 95', { stdio: 'inherit' });
+  console.log('Tests passed and coverage is 95%.');
+} catch (error: unknown) {
+  console.error('Error running tests or coverage is below 95%:', error);
+  process.exit(1);
+}
+
+// Check prettier format and linting
+console.log('Checking prettier format and linting...');
+try {
+  execSync('bun run lint', { stdio: 'inherit' });
+  execSync('bun run lint:format', { stdio: 'inherit' });
+  execSync('bun run lint:spelling', { stdio: 'inherit' });
+  console.log('Prettier format and linting passed.');
+} catch (error: unknown) {
+  console.error('Error checking prettier format and linting:', error);
+  process.exit(1);
+}
+
 // Build the Main app
 console.log('Building Main app...');
 try {
