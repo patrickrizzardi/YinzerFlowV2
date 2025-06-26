@@ -22,7 +22,7 @@
     "bun",
     "yinzerflow"
   ],
-  "types": "index.d.ts",
+  "types": "typedefs/public/index.d.ts",
   "main": "index.js",
   "type": "module",
   "scripts": {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
-import { SetupImpl } from '@core/setup/Setup.ts';
+import { SetupImpl } from '@core/setup/SetupImpl.ts';
 import type { ContextImpl } from '@core/execution/ContextImpl.ts';
 
 describe('Setup', () => {

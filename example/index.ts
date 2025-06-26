@@ -1,16 +1,9 @@
-import type { ContextImpl } from '@core/execution/ContextImpl.ts';
 import { YinzerFlow } from '@core/YinzerFlow.ts';
-import type { RouteResolvedGenerics } from '@typedefs/internal/Generics.js';
-import type { ResponseFunctionResolved } from '@typedefs/internal/RouteRegistryResolved.js';
+import type { HandlerCallback } from '@typedefs/public/Context.js';
 
 const app = new YinzerFlow({});
 
-app.onError<{
-  response: {
-    success: boolean;
-    message: string;
-  };
-}>((ctx) => {
+app.onError((ctx) => {
   ctx.response.setStatusCode(404);
   return {
     success: false,
@@ -18,16 +11,12 @@ app.onError<{
   };
 });
 
-app.beforeAll(
-  [
-    (ctx) => {
-      console.log('beforeAll');
-    },
-  ],
-  {},
-);
+app.beforeAll([
+  (ctx) => {
+    console.log('beforeAll');
+  },
+]);
 
-// Fix to be an array of functions
 app.afterAll([
   (ctx) => {
     ctx.response.setStatusCode(202);
@@ -37,13 +26,20 @@ app.afterAll([
 
 app.post(
   '/get/:id',
-  () => {
+  (() => {
     console.log('route handler');
 
     return {
       message: 'Hello World',
     };
-  },
+  }) satisfies HandlerCallback<{
+    body: {
+      name: string;
+    };
+    response: {
+      message: string;
+    };
+  }>,
   {
     beforeHooks: [
       (ctx) => {
@@ -59,12 +55,27 @@ app.post(
   },
 );
 
-const callback: ResponseFunctionResolved = ({ request, response }) => {
-  const body = request.body as { name: string };
+const callback: HandlerCallback<{
+  response: {
+    success: false;
+    message: string;
+  };
+  body: {
+    name: string;
+  };
+  query: {
+    name: string;
+  };
+  params: {
+    id: string;
+  };
+}> = ({ request, response }) => {
   response.setStatusCode(200);
 
+  console.log(request.query.name);
+
   return {
-    success: true,
+    success: false,
     message: 'Post request received',
   };
 };

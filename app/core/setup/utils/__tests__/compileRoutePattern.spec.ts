@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
+import type { IRoute } from '@typedefs/core/setup/RouteRegistry.js';
 import { compileRoutePattern } from '../compileRoutePatter.ts';
 import { httpMethod } from '@constants/http.ts';
-import type { IRoute } from '@typedefs/core/setup/RouteRegistry.js';
 
 describe('compileRoutePattern', () => {
   describe('Basic route compilation', () => {

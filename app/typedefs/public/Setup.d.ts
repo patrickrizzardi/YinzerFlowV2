@@ -1,18 +1,17 @@
 import type { THttpMethod } from '@typedefs/constants/http.js';
-import type { ResponseFunctionResolved, RouteRegistryOptionsResolved, UndefinedResponseFunctionResolved } from '@typedefs/internal/RouteRegistryResolved.js';
-import type { SetupMethodResolved } from '@typedefs/internal/SetupResolved.js';
-import type { GlobalHookOptionsResolved } from '@typedefs/internal/HookRegistry.js';
-import type { RouteResolvedGenerics } from '@typedefs/internal/Generics.js';
+import type { InternalSetupMethod } from '@typedefs/internal/InternalSetupImpl.d.ts';
+import type { GlobalHookOptionsResolved } from '@typedefs/internal/InternalHookRegistryImpl.js';
+import type { HandlerCallback } from '@typedefs/public/Context.js';
 
 export interface Setup {
-  get: SetupMethodResolved;
-  post: SetupMethodResolved;
-  put: SetupMethodResolved;
-  patch: SetupMethodResolved;
-  delete: SetupMethodResolved;
-  options: SetupMethodResolved;
+  get: InternalSetupMethod;
+  post: InternalSetupMethod;
+  put: InternalSetupMethod;
+  patch: InternalSetupMethod;
+  delete: InternalSetupMethod;
+  options: InternalSetupMethod;
   group: (prefix: string, callback: (group: Record<Lowercase<THttpMethod>, SetupMethodResolved>) => void, options?: RouteRegistryOptionsResolved) => void;
-  beforeAll: (handlers: Array<ResponseFunctionResolved | UndefinedResponseFunctionResolved>, options?: GlobalHookOptionsResolved) => void;
-  afterAll: (handlers: Array<ResponseFunctionResolved>, options?: GlobalHookOptionsResolved) => void;
-  onError: <T extends RouteResolvedGenerics = RouteResolvedGenerics>(handler: ResponseFunctionResolved<T>) => void;
+  beforeAll: (handlers: Array<HandlerCallback>, options?: GlobalHookOptionsResolved) => void;
+  afterAll: (handlers: Array<HandlerCallback>, options?: GlobalHookOptionsResolved) => void;
+  onError: (handler: HandlerCallback) => void;
 }

@@ -6,25 +6,27 @@ import { parseIpAddress } from '@core/execution/utils/parseIpAddress.ts';
 import { extractBoundaryFromHeader } from '@core/execution/utils/extractBoundaryFromHeader.ts';
 import { parseHeaders } from '@core/execution/utils/parseHeaders.ts';
 import type { Request } from '@typedefs/public/Request.ts';
-import type { SetupImpl } from '@core/setup/Setup.ts';
+import type { SetupImpl } from '@core/setup/SetupImpl.ts';
+import type { InternalRequestImpl } from '@typedefs/internal/InternalRequestImpl.ts';
+import type { InternalSetupImpl } from '@typedefs/internal/InternalSetupImpl.ts';
 
-export class RequestImpl {
-  private readonly rawRequest: Request['rawBody'];
-  private readonly setup: SetupImpl;
+export class RequestImpl implements InternalRequestImpl {
+  readonly _rawRequest: Buffer | string;
+  readonly _setup: InternalSetupImpl;
 
   method: THttpMethod;
   path: string;
   protocol: string;
   headers: Partial<Record<THttpHeaders, string>>;
-  body: Request['body'];
-  query: Request['query'];
-  params: Request['params'];
+  body: unknown;
+  query: Record<string, string>;
+  params: Record<string, string>;
   ipAddress: string;
-  rawBody: Request['rawBody'];
+  rawBody: Buffer | string;
 
   constructor(rawRequest: Request['rawBody'], setup: SetupImpl) {
-    this.rawRequest = rawRequest;
-    this.setup = setup;
+    this._rawRequest = rawRequest;
+    this._setup = setup;
 
     const { method, path, protocol, headers, body, query, params, ipAddress, rawBody } = this._parseRequestIntoObject();
 
@@ -40,11 +42,11 @@ export class RequestImpl {
   }
 
   private _parseRequestIntoObject(): Request {
-    const request = this.rawRequest.toString();
+    const request = this._rawRequest.toString();
 
     const { method, path, protocol, headersRaw, rawBody } = parseHttpRequest(request);
 
-    const route = this.setup._routeRegistry.findRoute(method, path);
+    const route = this._setup._routeRegistry._findRoute(method, path);
     const headers = parseHeaders(headersRaw);
 
     // Extract content type and boundary for body parsing
@@ -60,7 +62,7 @@ export class RequestImpl {
       body: parseBody(rawBody, mainContentType, boundary),
       query: parseQuery(path),
       params: route?.params ?? {},
-      ipAddress: parseIpAddress(this.setup, headers),
+      ipAddress: parseIpAddress(this._setup, headers),
       rawBody,
     };
   }

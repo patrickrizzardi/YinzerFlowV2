@@ -1,4 +1,4 @@
-import type { PreCompiledRouteResolved, RouteRegistryResolved } from '@typedefs/internal/RouteRegistryResolved.ts';
+import type { InternalPreCompiledRoute, InternalRouteRegistry } from '@typedefs/internal/InternalRouteRegistryImpl.d.ts';
 
 /**
  * Compile a route pattern into a regular expression
@@ -9,7 +9,7 @@ import type { PreCompiledRouteResolved, RouteRegistryResolved } from '@typedefs/
  * // Returns { pattern: /^users\/([^/]+)\/posts\/([^/]+)$/, paramNames: ['id', 'postId'], isParameterized: true }
  * ```
  */
-export const compileRoutePattern = (route: RouteRegistryResolved): PreCompiledRouteResolved => {
+export const compileRoutePattern = (route: InternalRouteRegistry): InternalPreCompiledRoute => {
   const paramNames: Array<string> = [];
 
   // Convert route pattern to regex with capture groups

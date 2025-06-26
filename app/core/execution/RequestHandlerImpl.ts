@@ -1,5 +1,6 @@
-import type { ContextImpl } from '@core/execution/ContextImpl.ts';
-import type { SetupImpl } from '@core/setup/Setup.ts';
+import type { SetupImpl } from '@core/setup/SetupImpl.ts';
+import type { InternalContextImpl } from '@typedefs/internal/InternalContextImpl.ts';
+import type { InternalSetupImpl } from '@typedefs/internal/InternalSetupImpl.js';
 
 /**
  * Handles the complete lifecycle of an HTTP request
@@ -11,7 +12,7 @@ import type { SetupImpl } from '@core/setup/Setup.ts';
  * 4. Context.rawResponse is ready for sending
  */
 export class RequestHandler {
-  private readonly setup: SetupImpl;
+  private readonly setup: InternalSetupImpl;
 
   constructor(setup: SetupImpl) {
     this.setup = setup;
@@ -29,11 +30,11 @@ export class RequestHandler {
    * socket.write(context.rawResponse);
    * ```
    */
-  async handle(context: ContextImpl): Promise<void> {
+  async handle(context: InternalContextImpl): Promise<void> {
     try {
       // TODO: Implement the complete request pipeline
       // 1. Match route based on context.request.method + context.request.path
-      const matchedRoute = this.setup._routeRegistry.findRoute(context.request.method, context.request.path);
+      const matchedRoute = this.setup._routeRegistry._findRoute(context.request.method, context.request.path);
       if (!matchedRoute) {
         throw new Error('Route not found');
       }
@@ -74,7 +75,7 @@ export class RequestHandler {
    * Handle errors using the user-defined or default error handler
    * The error handler returns a response object that we apply to the context
    */
-  private async handleError(context: ContextImpl, error: unknown): Promise<void> {
+  private async handleError(context: InternalContextImpl, error: unknown): Promise<void> {
     console.error('Request handling error:', error);
 
     try {

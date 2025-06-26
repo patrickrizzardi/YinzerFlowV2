@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { parseIpAddress } from '../parseIpAddress.ts';
-import { SetupImpl } from '@core/setup/Setup.ts';
+import { SetupImpl } from '@core/setup/SetupImpl.ts';
 
 describe('parseIpAddress', () => {
   describe('No proxy configuration', () => {

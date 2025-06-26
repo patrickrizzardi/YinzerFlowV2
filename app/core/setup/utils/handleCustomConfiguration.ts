@@ -1,4 +1,4 @@
-import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
+import type { ServerConfiguration } from '@typedefs/public/Configuration.js';
 
 /**
  * Handle custom configuration
@@ -9,8 +9,8 @@ import type { IServerConfiguration } from '@typedefs/core/YinzerFlow.js';
  * // Returns { port: 3000, host: '0.0.0.0', rawBody: false, networkLogs: false, proxyHops: 0, connectionOptions: { socketTimeout: 30000, gracefulShutdownTimeout: 30000, keepAliveTimeout: 65000, headersTimeout: 66000 } }
  * ```
  */
-export const handleCustomConfiguration = (configuration?: IServerConfiguration): IServerConfiguration => {
-  const defaultConfiguration: IServerConfiguration = {
+export const handleCustomConfiguration = (configuration?: ServerConfiguration): ServerConfiguration => {
+  const defaultConfiguration: ServerConfiguration = {
     port: 5000,
     host: '0.0.0.0',
     networkLogs: false,

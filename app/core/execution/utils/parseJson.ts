@@ -1,5 +1,3 @@
-import type { TJsonData, TRequestBody } from '@typedefs/core/Context.ts';
-
 /**
  * Parse JSON request body with proper error handling
  *
@@ -9,14 +7,14 @@ import type { TJsonData, TRequestBody } from '@typedefs/core/Context.ts';
  * // Returns { name: 'John', age: 30 }
  * ```
  */
-export const parseApplicationJson = (body: string): TRequestBody => {
+export const parseApplicationJson = (body: string): unknown => {
   // Handle empty strings, whitespace, and null characters
   if (!body || !body.trim() || body.trim() === '\0') {
     return undefined;
   }
 
   try {
-    return JSON.parse(body) as TJsonData;
+    return JSON.parse(body);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Invalid JSON: ${message}`);

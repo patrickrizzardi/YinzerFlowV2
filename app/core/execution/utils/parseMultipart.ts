@@ -1,4 +1,4 @@
-import type { ContentDispositionResolved, FileUploadResolved, MultipartFormDataResolved } from '@typedefs/internal/RequestResolved.ts';
+import type { InternalContentDisposition, InternalFileUpload, InternalMultipartFormData } from '@typedefs/internal/InternalRequestImpl.ts';
 
 /**
  * Split a multipart section into headers and content
@@ -31,8 +31,8 @@ const splitMultipartSection = (section: string): [string, string] => {
  * // Returns { name: 'file', filename: 'example.txt' }
  * ```
  */
-const parseContentDisposition = (headerLine: string): ContentDispositionResolved => {
-  const result: ContentDispositionResolved = { name: '' };
+const parseContentDisposition = (headerLine: string): InternalContentDisposition => {
+  const result: InternalContentDisposition = { name: '' };
 
   const nameMatch = /name=(?:"(?<temp2>[^"]*)"|(?<temp1>[^;,\s]+))/i.exec(headerLine);
   const filenameMatch = /filename=(?:"(?<temp2>[^"]*)"|(?<temp1>[^;,\s]+))/i.exec(headerLine);
@@ -115,10 +115,10 @@ const handleFileUpload = ({
   contentSection,
   headersSection,
 }: {
-  contentDisposition: ContentDispositionResolved;
+  contentDisposition: InternalContentDisposition;
   contentSection: string;
   headersSection: string;
-}): FileUploadResolved => {
+}): InternalFileUpload => {
   const contentTypeValue = extractSectionContentType(headersSection);
 
   // Remove trailing \r\n that's part of the multipart boundary
@@ -144,8 +144,8 @@ const handleFileUpload = ({
  * // Returns { fields: { file: 'This is the content of the file.\r\n' }, files: [{ filename: 'example.txt', contentType: 'text/plain', size: 13, content: 'This is the content of the file.\r\n' }] }
  * ```
  */
-export const parseMultipartFormData = (body: string, boundary: string): MultipartFormDataResolved => {
-  const result: MultipartFormDataResolved = {
+export const parseMultipartFormData = (body: string, boundary: string): InternalMultipartFormData => {
+  const result: InternalMultipartFormData = {
     fields: {},
     files: [],
   };

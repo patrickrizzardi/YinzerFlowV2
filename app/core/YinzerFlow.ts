@@ -1,8 +1,8 @@
 import { createServer } from 'net';
 
-import { RequestHandler } from '@core/execution/RequestHandler.ts';
+import { RequestHandler } from '@core/execution/RequestHandlerImpl.ts';
 import { ContextImpl } from '@core/execution/ContextImpl.ts';
-import { SetupImpl } from '@core/setup/Setup.ts';
+import { SetupImpl } from '@core/setup/SetupImpl.ts';
 
 export class YinzerFlow extends SetupImpl {
   private _isListening = false;

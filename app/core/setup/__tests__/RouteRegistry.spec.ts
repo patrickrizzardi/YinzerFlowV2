@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { httpMethod } from '@constants/http.ts';
-import { RouteRegistry } from '@core/setup/RouteRegistry.ts';
+import { RouteRegistry } from '@core/setup/RouteRegistryImpl.ts';
 
 describe('RouteRegistry', () => {
   describe('Exact Routes (no parameters)', () => {

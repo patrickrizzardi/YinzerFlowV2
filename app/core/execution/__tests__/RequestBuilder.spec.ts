@@ -1,6 +1,6 @@
-import { RequestImpl } from '@core/execution/RequestImpl.ts';
 import { describe, expect, it } from 'bun:test';
-import { SetupImpl } from '@core/setup/Setup.ts';
+import { RequestImpl } from '@core/execution/RequestImpl.ts';
+import { SetupImpl } from '@core/setup/SetupImpl.ts';
 
 describe('RequestImpl', () => {
   const createRawRequest = (requestString: string) => Buffer.from(requestString);
