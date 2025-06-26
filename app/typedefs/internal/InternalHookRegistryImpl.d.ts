@@ -15,8 +15,10 @@ export interface InternalHookRegistryImpl {
     handler: HandlerCallback;
     options?: InternalGlobalHookOptions;
   }>;
-  readonly _onError: HandlerCallback;
+  _onError: HandlerCallback;
+  _onNotFound: HandlerCallback;
   _addBeforeHooks: (handlers: Array<HandlerCallback>, options?: InternalGlobalHookOptions) => void;
   _addAfterHooks: (handlers: Array<HandlerCallback>, options?: InternalGlobalHookOptions) => void;
   _addOnError: (handler: HandlerCallback) => void;
+  _addOnNotFound: (handler: HandlerCallback) => void;
 }

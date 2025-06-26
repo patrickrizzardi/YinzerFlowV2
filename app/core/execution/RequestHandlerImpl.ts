@@ -32,11 +32,12 @@ export class RequestHandler {
    */
   async handle(context: InternalContextImpl): Promise<void> {
     try {
-      // TODO: Implement the complete request pipeline
       // 1. Match route based on context.request.method + context.request.path
       const matchedRoute = this.setup._routeRegistry._findRoute(context.request.method, context.request.path);
       if (!matchedRoute) {
-        throw new Error('Route not found');
+        const notFoundResponse = await this.setup._hooks._onNotFound(context);
+        context._response._setBody(notFoundResponse);
+        return;
       }
 
       const { route } = matchedRoute;

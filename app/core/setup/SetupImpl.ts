@@ -97,4 +97,8 @@ export class SetupImpl implements InternalSetupImpl {
   onError(handler: HandlerCallback): void {
     this._hooks._addOnError(handler);
   }
+
+  onNotFound(handler: HandlerCallback): void {
+    this._hooks._addOnNotFound(handler);
+  }
 }

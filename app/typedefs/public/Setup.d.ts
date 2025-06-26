@@ -14,4 +14,5 @@ export interface Setup {
   beforeAll: (handlers: Array<HandlerCallback>, options?: GlobalHookOptionsResolved) => void;
   afterAll: (handlers: Array<HandlerCallback>, options?: GlobalHookOptionsResolved) => void;
   onError: (handler: HandlerCallback) => void;
+  onNotFound: (handler: HandlerCallback) => void;
 }

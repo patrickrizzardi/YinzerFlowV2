@@ -11,6 +11,14 @@ app.onError((ctx) => {
   };
 });
 
+app.onNotFound((ctx) => {
+  ctx.response.setStatusCode(404);
+  return {
+    success: false,
+    message: 'Not Found',
+  };
+});
+
 app.beforeAll([
   (ctx) => {
     console.log('beforeAll');
