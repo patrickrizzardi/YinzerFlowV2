@@ -7,7 +7,7 @@ app.onError((ctx) => {
   ctx.response.setStatusCode(404);
   return {
     success: false,
-    message: 'Not Found',
+    message: 'Something went wrong',
   };
 });
 
@@ -23,37 +23,39 @@ app.afterAll([
     console.log('afterAll');
   },
 ]);
+app.group('/api', (app) => {
+  app.post(
+    '/get/:id',
+    ((ctx) => {
+      console.log('route handler');
+      console.log(ctx.request);
 
-app.post(
-  '/get/:id',
-  (() => {
-    console.log('route handler');
-
-    return {
-      message: 'Hello World',
-    };
-  }) satisfies HandlerCallback<{
-    body: {
-      name: string;
-    };
-    response: {
-      message: string;
-    };
-  }>,
-  {
-    beforeHooks: [
-      (ctx) => {
-        ctx.response.setStatusCode(200);
-        console.log('beforeRoute');
-      },
-    ],
-    afterHooks: [
-      () => {
-        console.log('afterRoute');
-      },
-    ],
-  },
-);
+      return {
+        message: 'Hello World',
+      };
+    }) satisfies HandlerCallback<{
+      body: {
+        name: string;
+      };
+      response: {
+        message: string;
+      };
+    }>,
+    {
+      beforeHooks: [
+        (ctx) => {
+          ctx.response.setStatusCode(200);
+          console.log('beforeRoute');
+        },
+      ],
+      afterHooks: [
+        () => {
+          console.log('afterRoute');
+        },
+      ],
+    },
+  );
+});
 
 const callback: HandlerCallback<{
   response: {

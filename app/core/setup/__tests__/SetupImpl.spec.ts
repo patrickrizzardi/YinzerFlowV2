@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { httpMethod, httpStatus, httpStatusCode } from '@constants/http.ts';
 import { SetupImpl } from '@core/setup/SetupImpl.ts';
-import type { ContextImpl } from '@core/execution/ContextImpl.ts';
 
 describe('Setup', () => {
   // Configurations are tested in handleCustomConfiguration.spec.ts
@@ -14,14 +13,14 @@ describe('Setup', () => {
     setup.patch('/', () => {});
     setup.delete('/', () => {});
     setup.options('/', () => {});
-    expect(setup._routeRegistry.findRoute(httpMethod.get, '/')).toBeDefined();
-    expect(setup._routeRegistry.findRoute(httpMethod.get, '/')?.route.options.beforeHooks).toBeDefined();
-    expect(setup._routeRegistry.findRoute(httpMethod.get, '/')?.route.options.afterHooks).toBeDefined();
-    expect(setup._routeRegistry.findRoute(httpMethod.post, '/')).toBeDefined();
-    expect(setup._routeRegistry.findRoute(httpMethod.put, '/')).toBeDefined();
-    expect(setup._routeRegistry.findRoute(httpMethod.patch, '/')).toBeDefined();
-    expect(setup._routeRegistry.findRoute(httpMethod.delete, '/')).toBeDefined();
-    expect(setup._routeRegistry.findRoute(httpMethod.options, '/')).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.get, '/')).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.get, '/')?.route.options.beforeHooks).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.get, '/')?.route.options.afterHooks).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.post, '/')).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.put, '/')).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.patch, '/')).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.delete, '/')).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.options, '/')).toBeDefined();
   });
 
   it('should register a group of routes', () => {
@@ -30,8 +29,8 @@ describe('Setup', () => {
       group.get('/users', () => {});
       group.post('/users', () => {});
     });
-    expect(setup._routeRegistry.findRoute(httpMethod.get, '/api/users')).toBeDefined();
-    expect(setup._routeRegistry.findRoute(httpMethod.post, '/api/users')).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.get, '/api/users')).toBeDefined();
+    expect(setup._routeRegistry._findRoute(httpMethod.post, '/api/users')).toBeDefined();
   });
 
   it('should merge group and route hooks in correct execution order', () => {
@@ -57,7 +56,7 @@ describe('Setup', () => {
       },
     );
 
-    const routeMatch = setup._routeRegistry.findRoute(httpMethod.get, '/api/users');
+    const routeMatch = setup._routeRegistry._findRoute(httpMethod.get, '/api/users');
 
     // Should be: [groupBefore, routeBefore]
     expect(routeMatch?.route.options.beforeHooks).toEqual([groupBeforeHook, routeBeforeHook]);
@@ -72,22 +71,22 @@ describe('Setup', () => {
     const beforeAllHook2 = () => true;
     const afterAllHook = () => {};
     const afterAllHook2 = () => true;
-    setup.beforeAll([beforeAllHook], {});
-    setup.beforeAll([beforeAllHook2], { routesToExclude: ['/api/users'] });
-    setup.afterAll([afterAllHook], {});
-    setup.afterAll([afterAllHook2], { routesToInclude: ['/api/users'] });
+    setup.beforeAll([beforeAllHook], { routesToExclude: [], routesToInclude: [] });
+    setup.beforeAll([beforeAllHook2], { routesToExclude: ['/api/users'], routesToInclude: [] });
+    setup.afterAll([afterAllHook], { routesToExclude: [], routesToInclude: [] });
+    setup.afterAll([afterAllHook2], { routesToExclude: [], routesToInclude: ['/api/users'] });
     expect(setup._hooks._beforeAll.size).toBe(2);
     expect(setup._hooks._afterAll.size).toBe(2);
     expect(setup._hooks._beforeAll).toEqual(
       new Set([
-        { handler: beforeAllHook, options: {} },
-        { handler: beforeAllHook2, options: { routesToExclude: ['/api/users'] } },
+        { handler: beforeAllHook, options: { routesToExclude: [], routesToInclude: [] } },
+        { handler: beforeAllHook2, options: { routesToExclude: ['/api/users'], routesToInclude: [] } },
       ]),
     );
     expect(setup._hooks._afterAll).toEqual(
       new Set([
-        { handler: afterAllHook, options: {} },
-        { handler: afterAllHook2, options: { routesToInclude: ['/api/users'] } },
+        { handler: afterAllHook, options: { routesToExclude: [], routesToInclude: [] } },
+        { handler: afterAllHook2, options: { routesToInclude: ['/api/users'], routesToExclude: [] } },
       ]),
     );
   });
