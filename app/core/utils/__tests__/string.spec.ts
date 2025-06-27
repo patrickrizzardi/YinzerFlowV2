@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { divideString } from '@utils/string.ts';
+import { divideString } from '@core/utils/string.ts';
 
 /**
  * String Utilities Tests

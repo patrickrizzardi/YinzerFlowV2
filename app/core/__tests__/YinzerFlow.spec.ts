@@ -93,7 +93,7 @@ describe('YinzerFlow', () => {
       const customApp = new YinzerFlow({
         port: 9000,
         host: '192.168.1.1',
-        networkLogs: true,
+        logLevel: 'network',
         proxyHops: 2,
       });
       const status = customApp.status();

@@ -67,7 +67,7 @@ describe('RequestHandler', () => {
 
   describe('handle - hook execution order', () => {
     it('should execute hooks in correct order: beforeAll -> beforeRoute -> handler -> afterRoute -> afterAll', async () => {
-      const executionOrder: string[] = [];
+      const executionOrder: Array<string> = [];
 
       const beforeAllHandler: HandlerCallback = () => {
         executionOrder.push('beforeAll');
@@ -106,7 +106,7 @@ describe('RequestHandler', () => {
     });
 
     it('should execute multiple beforeAll hooks in order', async () => {
-      const executionOrder: string[] = [];
+      const executionOrder: Array<string> = [];
 
       const beforeHook1: HandlerCallback = () => executionOrder.push('before1');
       const beforeHook2: HandlerCallback = () => executionOrder.push('before2');
@@ -126,7 +126,7 @@ describe('RequestHandler', () => {
     });
 
     it('should execute multiple afterAll hooks in order', async () => {
-      const executionOrder: string[] = [];
+      const executionOrder: Array<string> = [];
 
       const routeHandler: HandlerCallback = () => {
         executionOrder.push('route');
@@ -324,7 +324,7 @@ describe('RequestHandler', () => {
 
   describe('integration scenarios', () => {
     it('should handle complete request lifecycle with all features', async () => {
-      const executionLog: string[] = [];
+      const executionLog: Array<string> = [];
       const responseData = {
         message: 'Complete workflow',
         timestamp: expect.any(Number),

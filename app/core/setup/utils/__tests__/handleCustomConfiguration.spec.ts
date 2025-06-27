@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { handleCustomConfiguration } from '@core/setup/utils/handleCustomConfiguration.ts';
+import { logLevels } from '@constants/log.ts';
 
 describe('YinzerFlow', () => {
   it('should return a default configuration', () => {
@@ -7,7 +8,7 @@ describe('YinzerFlow', () => {
     expect(config).toBeDefined();
     expect(config.port).toBe(5000);
     expect(config.host).toBe('0.0.0.0');
-    expect(config.networkLogs).toBe(false);
+    expect(config.logLevel).toBe(logLevels.off);
     expect(config.proxyHops).toBe(0);
   });
 
@@ -18,7 +19,7 @@ describe('YinzerFlow', () => {
 
     expect(config.port).toBe(3000);
     expect(config.host).toBe('0.0.0.0');
-    expect(config.networkLogs).toBe(false);
+    expect(config.logLevel).toBe(logLevels.off);
     expect(config.proxyHops).toBe(0);
   });
 

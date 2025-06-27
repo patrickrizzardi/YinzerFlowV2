@@ -18,8 +18,8 @@ export class ContextImpl implements InternalContextImpl {
   request: Request;
   response: Response;
 
-  constructor(rawRequest: Buffer | string, setup: SetupImpl) {
-    this._request = new RequestImpl(rawRequest, setup);
+  constructor(rawRequest: Buffer | string, setup: SetupImpl, clientAddress?: string) {
+    this._request = new RequestImpl(rawRequest, setup, clientAddress);
     this._response = new ResponseImpl(this._request);
 
     this.request = this._request;

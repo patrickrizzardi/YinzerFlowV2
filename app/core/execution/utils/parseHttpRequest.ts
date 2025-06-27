@@ -1,6 +1,6 @@
 import type { THttpMethod } from '@typedefs/constants/http.js';
 import { httpMethod } from '@constants/http.ts';
-import { divideString } from '@utils/string.ts';
+import { divideString } from '@core/utils/string.ts';
 
 /**
  * Parse raw HTTP request string into its components that are needed for the request builder

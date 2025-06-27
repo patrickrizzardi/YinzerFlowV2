@@ -1,3 +1,6 @@
+import type { CreateEnum } from '@typedefs/internal/Generics.js';
+import type { logLevels } from '@constants/log.ts';
+
 export interface ServerConfiguration {
   /**
    * Port number of the server
@@ -14,10 +17,13 @@ export interface ServerConfiguration {
   //   corsOptions: CorsOptions;
 
   /**
-   * Verbose network logs
-   * @default false
+   * Logging level for YinzerFlow server
+   * - 'off': No logging (silent mode)
+   * - 'verbose': Application logging with Pittsburgh personality (level 1)
+   * - 'network': Network logging + application logging (level 2)
+   * @default 'off'
    */
-  networkLogs?: boolean;
+  logLevel?: CreateEnum<typeof logLevels>;
 
   /**
    * Number of proxy hops to the client

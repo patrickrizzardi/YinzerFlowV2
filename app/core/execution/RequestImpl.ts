@@ -24,11 +24,14 @@ export class RequestImpl implements InternalRequestImpl {
   ipAddress: string;
   rawBody: Buffer | string;
 
-  constructor(rawRequest: Request['rawBody'], setup: SetupImpl) {
+  constructor(rawRequest: Request['rawBody'], setup: SetupImpl, clientAddress?: string) {
     this._rawRequest = rawRequest;
     this._setup = setup;
 
-    const { method, path, protocol, headers, body, query, params, ipAddress, rawBody } = this._parseRequestIntoObject();
+    // Set initial IP address from socket, will be updated if headers provide better info
+    this.ipAddress = clientAddress ?? '';
+
+    const { method, path, protocol, headers, body, query, params, rawBody } = this._parseRequestIntoObject();
 
     this.method = method;
     this.path = path;
@@ -37,11 +40,16 @@ export class RequestImpl implements InternalRequestImpl {
     this.body = body;
     this.query = query;
     this.params = params;
-    this.ipAddress = ipAddress;
     this.rawBody = rawBody;
+
+    // Update IP address if parsing from headers provides something
+    const parsedIpAddress = parseIpAddress(this._setup, headers);
+    if (parsedIpAddress) {
+      this.ipAddress = parsedIpAddress;
+    }
   }
 
-  private _parseRequestIntoObject(): Request {
+  private _parseRequestIntoObject(): Omit<Request, 'ipAddress'> {
     const request = this._rawRequest.toString();
 
     const { method, path, protocol, headersRaw, rawBody } = parseHttpRequest(request);
@@ -62,7 +70,6 @@ export class RequestImpl implements InternalRequestImpl {
       body: parseBody(rawBody, mainContentType, boundary),
       query: parseQuery(path),
       params: route?.params ?? {},
-      ipAddress: parseIpAddress(this._setup, headers),
       rawBody,
     };
   }

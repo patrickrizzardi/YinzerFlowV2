@@ -1,7 +1,10 @@
+import { httpHeaders } from '@constants/http.ts';
 import { YinzerFlow } from '@core/YinzerFlow.ts';
 import type { HandlerCallback } from '@typedefs/public/Context.js';
 
-const app = new YinzerFlow({});
+const app = new YinzerFlow({
+  logLevel: 'verbose',
+});
 
 app.onError((ctx) => {
   ctx.response.setStatusCode(404);
@@ -21,7 +24,12 @@ app.onNotFound((ctx) => {
 
 app.beforeAll([
   (ctx) => {
-    console.log('beforeAll');
+    console.log('======== beforeAll ========');
+    ctx.response.addHeaders({
+      [httpHeaders.contentType]: 'application/json',
+      [httpHeaders.accessControlAllowOrigin]: '*',
+      [httpHeaders.accessControlAllowMethods]: 'GET, POST, PUT, DELETE, OPTIONS',
+    });
   },
 ]);
 
@@ -90,8 +98,6 @@ const callback: HandlerCallback<{
   };
 };
 
-app.post('/post', callback);
+app.post('/login', callback);
 
 await app.listen();
-
-console.log(app.status());

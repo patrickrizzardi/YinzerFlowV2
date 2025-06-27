@@ -27,7 +27,7 @@
       "@core/*": ["./app/core/*"],
       "@constants/*": ["./app/constants/*"],
       "@typedefs/*": ["./app/typedefs/*"],
-      "@utils/*": ["./app/utils/*"]
+      "@utils/*": ["./app/core/utils/*"]
     },
     "sourceMap": false,
     "removeComments": true,

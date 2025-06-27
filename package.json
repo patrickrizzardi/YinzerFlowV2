@@ -26,7 +26,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "bun test --watch",
+    "test": "bun test --watch --coverage",
     "test:production": "bun test --timeout 20 --rerun-each 10 --bail 10",
     "clean": "rm -rf lib && rm -rf storage && echo 'Done.'",
     "build": "bun clean; bun build.ts",
@@ -39,6 +39,7 @@
     "find-unused-packages": "bunx depcheck --quiet --ignores=cspell,eslint-import-resolver-typescript --skip-missing"
   },
   "dependencies": {
+    "dayjs": "^1.11.13"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.7",
