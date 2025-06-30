@@ -5,10 +5,10 @@ Welcome to the YinzerFlow documentation! This directory contains comprehensive d
 ## Contents
 
 - [Routing System](./routing.md) - Comprehensive guide to the routing system, including route definition, parameters, and groups.
-- [Request Lifecycle Hooks](./hooks.md) - In-depth documentation of the hooks system (formerly middleware) for intercepting and modifying requests.
-- [Content Type Handling](./content-types.md) - Working with different content types in requests and responses.
+- [Request Lifecycle Hooks](./hooks.md) - In-depth documentation of the hooks system for intercepting and modifying requests.
+- [Request Object](./request.md) - Complete guide to request properties: headers, body, query parameters, route parameters, and security features.
+- [CORS Configuration](./cors.md) - Cross-Origin Resource Sharing setup and security considerations.
 - [Error Handling](./error-handling.md) - Guide to handling errors at different levels in your application.
-- [Connection Management](#connection-management) - Information about the built-in connection management system.
 
 ## Getting Started
 
@@ -100,17 +100,17 @@ The documentation is organized as follows:
 
 ```
 docs/
-├── README.md                # This file - overview and getting started
+├── start-here.MD            # This file - overview and getting started
 ├── routing.md               # Comprehensive guide to the routing system
 ├── hooks.md                 # In-depth documentation of the hooks system
+├── request.md               # Request object: headers, body, query, params, and security
+├── cors.md                  # CORS configuration and security considerations
 ├── content-types.md         # Working with different content types
 ├── error-handling.md        # Guide to handling errors at different levels in your application
 ```
 
 Additional documentation files will be added as the framework evolves, including:
 
-- Error handling and logging
 - Performance optimization guides
-- Security best practices
 - Deployment strategies
 - Troubleshooting and FAQs

@@ -38,14 +38,15 @@ Basic setup example showing minimal configuration:
 // Simplest possible example
 ```
 
-### Advanced Example
-```typescript
-// More complex real-world example
+### Alternate Exammple
+```typscript
+// Other more niche examples
 ```
 
-### Common Use Cases
-- **Use Case 1**: Brief description
-- **Use Case 2**: Brief description
+## Common Use Cases (if applicable)
+- **Use Case 1**: Brief description with action-oriented name
+- **Use Case 2**: Brief description with action-oriented name
+- **Use Case 3**: Brief description with action-oriented name
 
 ## API Reference (if applicable)
 
@@ -90,7 +91,10 @@ Security features and best practices implemented.
 **Required examples**:
 - **Basic Example**: Minimal working code
 - **Advanced Example**: Real-world complexity
-- **Common Use Cases**: 2-3 practical scenarios
+
+#### 2.5. Common Use Cases Section
+**When to include**: All features (no exceptions)
+**Format**: 3-6 action-oriented use cases showing practical applications
 
 #### 3. Security Considerations Section
 **When to include**: Any feature that handles:
@@ -124,6 +128,7 @@ Before submitting documentation, verify:
 - [ ] Clear, concise opening description
 - [ ] Configuration section (if applicable)
 - [ ] At least 2 code examples
+- [ ] Common use cases section (3-6 practical scenarios)
 - [ ] Security considerations (if applicable)
 - [ ] All code examples are tested and functional
 
@@ -146,12 +151,13 @@ Before submitting documentation, verify:
 When creating documentation for YinzerFlow:
 
 1. **Always start with the template structure above**
-2. **Include ALL applicable sections** - don't skip Configuration, Examples, or Security
+2. **Include ALL applicable sections** - don't skip Configuration, Examples, Common Use Cases, or Security
 3. **Use the 🛡️ emoji for security features** to make them stand out
 4. **Write security sections in Problem/Solution format** to show YinzerFlow's advantages
-5. **Make examples progressively complex** - Basic → Advanced → Real-world
-6. **Include TypeScript types in all examples**
-7. **End security sections with**: "These security measures ensure YinzerFlow's [feature] implementation follows security best practices and prevents common attack vectors while maintaining spec compliance."
+5. **Make examples progressively complex** - Basic → Common Use Cases → Advanced → Real-world
+6. **Write action-oriented use cases** - Start with verbs like "Extract", "Handle", "Process", "Validate"
+7. **Include TypeScript types in all examples**
+8. **End security sections with**: "These security measures ensure YinzerFlow's [feature] implementation follows security best practices and prevents common attack vectors while maintaining spec compliance."
 
 ## Example Security Section Format
 

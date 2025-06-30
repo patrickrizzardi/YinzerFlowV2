@@ -38,6 +38,15 @@ const app = new YinzerFlow({
 | `optionsSuccessStatus` | `number` | `204` | Status code for successful OPTIONS |
 | `preflightContinue` | `boolean` | `false` | Pass control to next handler after preflight |
 
+## Common Use Cases
+
+- **Secure Web Applications**: Configure CORS for authenticated browser apps with specific domains and credentials
+- **Public APIs**: Enable broad access for public data APIs while maintaining security controls
+- **Development Environments**: Set up flexible CORS for local development with multiple frontend ports
+- **Microservices**: Configure cross-service communication with controlled origin validation
+- **Mobile App Backends**: Handle native mobile app requests with appropriate CORS settings
+- **Third-Party Integrations**: Allow controlled access from partner domains with validation functions
+
 ## Origin Configuration Examples
 
 ### Wildcard (Public APIs)
@@ -101,46 +110,6 @@ cors: {
 **Function Return Values:**
 - `true` - Allow the origin (request proceeds with CORS headers)
 - `false` - Reject the origin (403 Forbidden response)
-
-## Common Use Cases
-
-### Public API (No Authentication)
-```typescript
-cors: {
-  enabled: true,
-  origin: '*',
-  credentials: false,
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type'],
-}
-```
-
-### Authenticated Web App
-```typescript
-cors: {
-  enabled: true,
-  origin: 'https://myapp.com',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
-}
-```
-
-### Development Environment
-```typescript
-cors: {
-  enabled: true,
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://127.0.0.1:3000'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}
-```
 
 ## Request Flow
 

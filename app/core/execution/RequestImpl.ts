@@ -4,7 +4,7 @@ import { parseHttpRequest } from '@core/execution/utils/parseHttpRequest.ts';
 import { parseQuery } from '@core/execution/utils/parseQuery.ts';
 import { parseIpAddress } from '@core/execution/utils/parseIpAddress.ts';
 import { extractBoundaryFromHeader } from '@core/execution/utils/extractBoundaryFromHeader.ts';
-import { parseHeaders } from '@core/execution/utils/parseHeaders.ts';
+import { parseRequestHeaders } from '@core/execution/utils/parseRequestHeaders.ts';
 import type { Request } from '@typedefs/public/Request.ts';
 import type { SetupImpl } from '@core/setup/SetupImpl.ts';
 import type { InternalRequestImpl } from '@typedefs/internal/InternalRequestImpl.ts';
@@ -55,7 +55,7 @@ export class RequestImpl implements InternalRequestImpl {
     const { method, path, protocol, headersRaw, rawBody } = parseHttpRequest(request);
 
     const route = this._setup._routeRegistry._findRoute(method, path);
-    const headers = parseHeaders(headersRaw);
+    const headers = parseRequestHeaders(headersRaw);
 
     // Extract content type and boundary for body parsing
     const contentTypeHeader = headers['content-type'];

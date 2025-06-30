@@ -2,6 +2,7 @@ import { formatBodyIntoString } from '@core/execution/utils/formatBodyIntoString
 import { determineEncoding } from '@core/execution/utils/determineEncoding.ts';
 import { inferContentType } from '@core/execution/utils/inferContentType.ts';
 import { mapStatusCodeToMessage } from '@core/execution/utils/mapStatusCodeToMessage.ts';
+import { filterAndValidateHeaders } from '@core/execution/utils/validateResponseHeaders.ts';
 import { httpEncoding, httpStatus, httpStatusCode } from '@constants/http.ts';
 import type { InternalHttpEncoding, InternalHttpHeaders, InternalHttpStatus, InternalHttpStatusCode } from '@typedefs/constants/http.js';
 import type { Request } from '@typedefs/public/Request.ts';
@@ -40,11 +41,19 @@ export class ResponseImpl implements InternalResponseImpl {
   }
 
   _setHeadersIfNotSet(headers: Partial<Record<InternalHttpHeaders, string>>): void {
+    // SECURITY: Filter undefined values and validate response headers for CRLF injection
+    // Only validate headers that aren't already set
+    const headersToSet: Record<string, string> = {};
     for (const [key, value] of Object.entries(headers)) {
-      if (!(key in this._headers)) {
-        this._headers[key] = value;
+      if (value !== undefined && !(key in this._headers)) {
+        headersToSet[key] = value;
       }
     }
+
+    const validatedHeaders = filterAndValidateHeaders(headersToSet);
+
+    // Set headers after validation passes
+    Object.assign(this._headers, validatedHeaders);
   }
 
   _setBody(body: unknown): void {
@@ -65,7 +74,11 @@ export class ResponseImpl implements InternalResponseImpl {
   }
 
   addHeaders(headers: Partial<Record<InternalHttpHeaders, string>>): void {
-    this._headers = { ...this._headers, ...headers };
+    // SECURITY: Filter undefined values and validate response headers for CRLF injection
+    const validatedHeaders = filterAndValidateHeaders(headers);
+
+    // Set headers after validation passes
+    this._headers = { ...this._headers, ...validatedHeaders };
   }
 
   removeHeaders(headerNames: Array<InternalHttpHeaders>): void {

@@ -113,7 +113,7 @@ describe('ResponseImpl', () => {
         response.addHeaders(headers);
 
         Object.entries(expectedResult).forEach(([key, value]) => {
-          expect(response._headers[key as keyof typeof response._headers]).toBe(value);
+          expect(response._headers[key]).toBe(value);
         });
       });
 
@@ -157,11 +157,11 @@ describe('ResponseImpl', () => {
         response.removeHeaders(headersToRemove);
 
         expectedRemoved.forEach((header) => {
-          expect(response._headers[header as keyof typeof response._headers]).toBeUndefined();
+          expect(response._headers[header]).toBeUndefined();
         });
 
         expectedRemaining.forEach((header) => {
-          expect(response._headers[header as keyof typeof response._headers]).toBeDefined();
+          expect(response._headers[header]).toBeDefined();
         });
       });
 
@@ -410,8 +410,122 @@ describe('ResponseImpl', () => {
         expect(apiResponse._stringBody).toContain(expectedStatusText);
         expect(apiResponse._body).toEqual(body);
         Object.entries(headers).forEach(([key, value]) => {
-          expect(apiResponse._headers[key as keyof typeof apiResponse._headers]).toBe(value);
+          expect(apiResponse._headers[key]).toBe(value);
         });
+      });
+    });
+  });
+
+  describe('Security - CRLF Injection Protection', () => {
+    describe('addHeaders', () => {
+      it('should accept valid header values', () => {
+        const validHeaders = {
+          'content-type': 'application/json',
+          'cache-control': 'no-cache',
+          location: 'https://example.com',
+        };
+
+        expect(() => response.addHeaders(validHeaders)).not.toThrow();
+        expect(response._headers).toEqual(expect.objectContaining(validHeaders));
+      });
+
+      it('should reject headers with CRLF injection attempts', () => {
+        const maliciousHeaders = {
+          location: 'https://example.com\r\nSet-Cookie: session=hijacked',
+        };
+
+        expect(() => response.addHeaders(maliciousHeaders)).toThrow('Header value contains invalid line break characters: location');
+      });
+
+      it('should reject headers with suspicious injection patterns', () => {
+        const suspiciousHeaders = {
+          'x-redirect': 'evil.com\r\nSet-Cookie: malicious=true',
+        };
+
+        expect(() => response.addHeaders(suspiciousHeaders)).toThrow('Header value contains invalid line break characters: x-redirect');
+      });
+
+      it('should not set any headers if validation fails', () => {
+        const mixedHeaders = {
+          'content-type': 'application/json',
+          location: 'https://example.com\r\nSet-Cookie: session=hijacked',
+          'cache-control': 'no-cache',
+        };
+
+        expect(() => response.addHeaders(mixedHeaders)).toThrow();
+
+        // Should not have set any headers since validation failed
+        expect(response._headers['content-type']).toBeUndefined();
+        expect(response._headers['cache-control']).toBeUndefined();
+      });
+    });
+
+    describe('_setHeadersIfNotSet', () => {
+      it('should accept valid headers when not already set', () => {
+        const validHeaders = {
+          'content-type': 'application/json',
+          'cache-control': 'no-cache',
+        };
+
+        expect(() => response._setHeadersIfNotSet(validHeaders)).not.toThrow();
+        expect(response._headers).toEqual(expect.objectContaining(validHeaders));
+      });
+
+      it('should reject CRLF injection in new headers', () => {
+        const maliciousHeaders = {
+          'x-custom': 'value\r\nMalicious-Header: injected',
+        };
+
+        expect(() => response._setHeadersIfNotSet(maliciousHeaders)).toThrow('Header value contains invalid line break characters: x-custom');
+      });
+
+      it('should not validate headers that are already set', () => {
+        // Pre-set a header (bypassing validation for test setup)
+        response._headers['existing-header'] = 'existing-value';
+
+        const headersWithExisting = {
+          'existing-header': 'value\r\nMalicious-Header: injected', // This would normally fail
+          'new-header': 'safe-value',
+        };
+
+        // Should not throw because existing-header won't be validated (already exists)
+        expect(() => response._setHeadersIfNotSet(headersWithExisting)).not.toThrow();
+
+        // Existing header should remain unchanged
+        expect(response._headers['existing-header']).toBe('existing-value');
+        // New header should be set
+        expect(response._headers['new-header']).toBe('safe-value');
+      });
+
+      it('should handle undefined values gracefully', () => {
+        const headersWithUndefined = {
+          'content-type': 'application/json',
+          'undefined-header': undefined,
+        };
+
+        expect(() => response._setHeadersIfNotSet(headersWithUndefined)).not.toThrow();
+        expect(response._headers['content-type']).toBe('application/json');
+        expect(response._headers['undefined-header']).toBeUndefined();
+      });
+    });
+
+    describe('Integration with real attack scenarios', () => {
+      it('should prevent session hijacking via Location header', () => {
+        const maliciousRedirect = 'https://legitimate.com\r\nSet-Cookie: sessionid=stolen123; Path=/';
+
+        expect(() => response.addHeaders({ location: maliciousRedirect })).toThrow('Header value contains invalid line break characters: location');
+      });
+
+      it('should prevent response splitting attacks', () => {
+        const responseSplitting = 'safe-value\r\n\r\nHTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\nMalicious content';
+
+        expect(() => response.addHeaders({ 'x-custom': responseSplitting })).toThrow('Header value contains invalid line break characters: x-custom');
+      });
+
+      it('should prevent authorization header injection', () => {
+        const authInjection = 'Bearer token123\r\nAuthorization: Bearer stolen-token';
+
+        expect(() => response.addHeaders({ 'x-token': authInjection })).toThrow('Header value contains invalid line break characters: x-token');
       });
     });
   });
