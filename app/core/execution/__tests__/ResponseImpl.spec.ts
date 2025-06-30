@@ -43,8 +43,14 @@ describe('ResponseImpl', () => {
         expect(response._request).toBe(request);
         expect(response._statusCode).toBe(httpStatusCode.ok);
         expect(response._status).toBe(httpStatus.ok);
-        expect(response._headers).toEqual({});
         expect(response._body).toBe('');
+      });
+
+      it('should set default security headers', () => {
+        expect(response._headers['X-Content-Type-Options']).toBe('nosniff');
+        expect(response._headers['X-Frame-Options']).toBe('DENY');
+        expect(response._headers['X-XSS-Protection']).toBe('1; mode=block');
+        expect(response._headers['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
       });
 
       it('should maintain reference to original request', () => {
@@ -526,6 +532,173 @@ describe('ResponseImpl', () => {
         const authInjection = 'Bearer token123\r\nAuthorization: Bearer stolen-token';
 
         expect(() => response.addHeaders({ 'x-token': authInjection })).toThrow('Header value contains invalid line break characters: x-token');
+      });
+    });
+  });
+
+  describe('Security Headers', () => {
+    describe('Default Security Headers', () => {
+      it('should set all required security headers by default', () => {
+        const securityHeaders = {
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'DENY',
+          'X-XSS-Protection': '1; mode=block',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+        };
+
+        Object.entries(securityHeaders).forEach(([header, expectedValue]) => {
+          expect(response._headers[header]).toBe(expectedValue);
+        });
+      });
+
+      it('should not override security headers if already set', () => {
+        // Create a new response with custom security headers
+        const customRequest = createTestRequest();
+        const customResponse = new ResponseImpl(customRequest);
+
+        // Override security headers before they're set
+        customResponse._headers['X-Frame-Options'] = 'SAMEORIGIN';
+        customResponse._headers['X-Content-Type-Options'] = 'nosniff';
+
+        // Call security headers method again
+        customResponse._setSecurityHeaders();
+
+        // Should keep the custom value, not override it
+        expect(customResponse._headers['X-Frame-Options']).toBe('SAMEORIGIN');
+        expect(customResponse._headers['X-Content-Type-Options']).toBe('nosniff');
+
+        // Should still set other headers that weren't custom
+        expect(customResponse._headers['X-XSS-Protection']).toBe('1; mode=block');
+        expect(customResponse._headers['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
+      });
+
+      it('should allow users to override security headers via addHeaders', () => {
+        // Override security headers after construction
+        response.addHeaders({
+          'X-Frame-Options': 'SAMEORIGIN',
+          'X-Content-Type-Options': 'sniff',
+        });
+
+        expect(response._headers['X-Frame-Options']).toBe('SAMEORIGIN');
+        expect(response._headers['X-Content-Type-Options']).toBe('sniff');
+
+        // Other security headers should remain unchanged
+        expect(response._headers['X-XSS-Protection']).toBe('1; mode=block');
+        expect(response._headers['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
+      });
+
+      it('should allow users to remove security headers', () => {
+        // Remove some security headers
+        response.removeHeaders(['X-Frame-Options', 'X-XSS-Protection']);
+
+        expect(response._headers['X-Frame-Options']).toBeUndefined();
+        expect(response._headers['X-XSS-Protection']).toBeUndefined();
+
+        // Other security headers should remain
+        expect(response._headers['X-Content-Type-Options']).toBe('nosniff');
+        expect(response._headers['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
+      });
+    });
+
+    describe('Security Header Values', () => {
+      const securityHeaderTestCases = [
+        {
+          header: 'X-Content-Type-Options',
+          value: 'nosniff',
+          purpose: 'prevents MIME sniffing attacks',
+        },
+        {
+          header: 'X-Frame-Options',
+          value: 'DENY',
+          purpose: 'prevents clickjacking attacks',
+        },
+        {
+          header: 'X-XSS-Protection',
+          value: '1; mode=block',
+          purpose: 'enables XSS protection in browsers',
+        },
+        {
+          header: 'Referrer-Policy',
+          value: 'strict-origin-when-cross-origin',
+          purpose: 'controls referrer information leakage',
+        },
+      ];
+
+      it.each(securityHeaderTestCases)('should set $header to "$value" to $purpose', ({ header, value }) => {
+        expect(response._headers[header]).toBe(value);
+      });
+    });
+
+    describe('Integration with Response Processing', () => {
+      it('should maintain security headers through complete response lifecycle', () => {
+        // Build a complete response
+        response.setStatusCode(httpStatusCode.created);
+        response.addHeaders({
+          'content-type': 'application/json',
+          location: '/api/users/123',
+        });
+        response._setBody({ id: 123, name: 'Test User' });
+        response._parseResponseIntoString();
+
+        // Security headers should still be present
+        expect(response._headers['X-Content-Type-Options']).toBe('nosniff');
+        expect(response._headers['X-Frame-Options']).toBe('DENY');
+        expect(response._headers['X-XSS-Protection']).toBe('1; mode=block');
+        expect(response._headers['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
+
+        // Other headers should also be present
+        expect(response._headers['content-type']).toBe('application/json');
+        expect(response._headers.location).toBe('/api/users/123');
+
+        // Response string should contain security headers
+        expect(response._stringBody).toContain('X-Content-Type-Options: nosniff');
+        expect(response._stringBody).toContain('X-Frame-Options: DENY');
+        expect(response._stringBody).toContain('X-XSS-Protection: 1; mode=block');
+        expect(response._stringBody).toContain('Referrer-Policy: strict-origin-when-cross-origin');
+      });
+
+      it('should work with createCompleteResponse helper', () => {
+        const completeResponse = createCompleteResponse(request, httpStatusCode.ok, { 'cache-control': 'max-age=3600' }, { message: 'Success' });
+
+        // Should have both custom headers and security headers
+        expect(completeResponse._headers['cache-control']).toBe('max-age=3600');
+        expect(completeResponse._headers['X-Content-Type-Options']).toBe('nosniff');
+        expect(completeResponse._headers['X-Frame-Options']).toBe('DENY');
+        expect(completeResponse._headers['X-XSS-Protection']).toBe('1; mode=block');
+        expect(completeResponse._headers['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
+      });
+    });
+
+    describe('Edge Cases', () => {
+      it('should not interfere with existing header functionality', () => {
+        // Test that security headers don't break normal header operations
+        response.addHeaders({ 'custom-header': 'custom-value' });
+        response.removeHeaders(['X-Frame-Options']);
+        response.addHeaders({ 'another-header': 'another-value' });
+
+        expect(response._headers['custom-header']).toBe('custom-value');
+        expect(response._headers['another-header']).toBe('another-value');
+        expect(response._headers['X-Frame-Options']).toBeUndefined();
+
+        // Other security headers should remain
+        expect(response._headers['X-Content-Type-Options']).toBe('nosniff');
+      });
+
+      it('should handle multiple response instances independently', () => {
+        const request2 = createTestRequest('POST /api HTTP/1.1\r\nHost: localhost\r\n\r\n');
+        const response2 = new ResponseImpl(request2);
+
+        // Modify one response
+        response.removeHeaders(['X-Frame-Options']);
+        response.addHeaders({ 'X-Content-Type-Options': 'sniff' });
+
+        // Other response should be unaffected
+        expect(response2._headers['X-Frame-Options']).toBe('DENY');
+        expect(response2._headers['X-Content-Type-Options']).toBe('nosniff');
+
+        // Modified response should have changes
+        expect(response._headers['X-Frame-Options']).toBeUndefined();
+        expect(response._headers['X-Content-Type-Options']).toBe('sniff');
       });
     });
   });

@@ -26,7 +26,7 @@ app.get('/api/data', ({ response }) => {
 });
 ```
 
-YinzerFlow's response handling includes built-in security protections that are automatically applied to prevent common vulnerabilities.
+YinzerFlow's response handling includes built-in security protections that are automatically applied to prevent common vulnerabilities, including automatic security headers on all responses.
 
 ## Basic Example
 

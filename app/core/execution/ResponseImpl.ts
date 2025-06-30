@@ -20,6 +20,7 @@ export class ResponseImpl implements InternalResponseImpl {
 
   constructor(request: Request) {
     this._request = request;
+    this._setSecurityHeaders();
   }
 
   _parseResponseIntoString(): void {
@@ -85,5 +86,18 @@ export class ResponseImpl implements InternalResponseImpl {
     for (const headerName of headerNames) {
       delete this._headers[headerName];
     }
+  }
+
+  /**
+   * Set default security headers to protect against common vulnerabilities
+   * These headers are set only if not already present, allowing users to override if needed
+   */
+  _setSecurityHeaders(): void {
+    this._setHeadersIfNotSet({
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+    });
   }
 }
