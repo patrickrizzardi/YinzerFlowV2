@@ -470,12 +470,12 @@ describe('RequestHandler', () => {
 
         await requestHandler.handle(context);
 
-        // With current implementation, CORS returns true for non-OPTIONS requests,
-        // causing RequestHandler to return early, so response remains in default state
+        // SECURITY: With secure CORS implementation, non-OPTIONS requests from authorized origins
+        // now correctly get CORS headers set
         expect(context._response._body).toBe(''); // Default body value
         expect(context._response._statusCode).toBe(200); // Default status code
-        // No CORS headers are set for non-OPTIONS requests in current implementation
-        expect(context._response._headers['Access-Control-Allow-Origin']).toBeUndefined();
+        // CORS headers are now correctly set for non-OPTIONS requests from authorized origins
+        expect(context._response._headers['Access-Control-Allow-Origin']).toBe('https://example.com');
       });
     });
   });
@@ -592,10 +592,15 @@ describe('RequestHandler', () => {
 
         await requestHandler.handle(context);
 
-        // Current implementation: CORS still sets headers regardless of origin validation
-        // and then RequestHandler continues to route matching, resulting in 404
-        expect(context._response._statusCode).toBe(404);
-        expect(context._response._headers['Access-Control-Allow-Origin']).toBe('https://malicious.com');
+        // SECURITY: With secure CORS implementation, unauthorized origins are now properly rejected
+        // with 403 Forbidden instead of getting CORS headers set
+        expect(context._response._statusCode).toBe(403);
+        expect(context._response._body).toEqual({
+          error: 'CORS: Origin not allowed',
+          origin: 'https://malicious.com',
+        });
+        // SECURITY: Unauthorized origins should not get CORS headers
+        expect(context._response._headers['Access-Control-Allow-Origin']).toBeUndefined();
       });
 
       it('should handle preflight with preflightContinue enabled', async () => {

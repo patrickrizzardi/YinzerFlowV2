@@ -74,21 +74,55 @@ describe('CORS Functionality', () => {
       });
     });
 
-    it('should not modify context for non-OPTIONS requests', () => {
-      const config = createCorsConfig();
-      const context = createTestContext('GET');
+    it('should not modify status/body but should add CORS headers for non-OPTIONS requests', () => {
+      const config = createCorsConfig(); // This uses origin: '*' by default
+      const context = createTestContext('GET', '/', { origin: 'https://example.com' });
 
       // Store initial state
       const initialStatusCode = context._response._statusCode;
       const initialBody = context._response._body;
-      const initialHeaders = { ...context._response._headers };
 
       const result = handleCors(context, config);
 
       expect(result).toBe(true);
       expect(context._response._statusCode).toBe(initialStatusCode);
       expect(context._response._body).toBe(initialBody);
-      expect(context._response._headers).toEqual(initialHeaders);
+
+      // SECURITY: With wildcard origin, should return literal '*', not echo back the origin
+      expect(context._response._headers['Access-Control-Allow-Origin']).toBe('*');
+      expect(context._response._headers['Access-Control-Allow-Credentials']).toBe('false');
+    });
+
+    it('should add CORS headers to non-OPTIONS requests for wildcard origin', () => {
+      const config = createCorsConfig({ origin: '*' });
+      const context = createTestContext('GET', '/', { origin: 'https://any-site.com' });
+
+      // Store initial state
+      const initialStatusCode = context._response._statusCode;
+      const initialBody = context._response._body;
+
+      const result = handleCors(context, config);
+
+      expect(result).toBe(true);
+      expect(context._response._statusCode).toBe(initialStatusCode);
+      expect(context._response._body).toBe(initialBody);
+
+      // SECURITY: Should return literal '*' for wildcard, never echo back request origin
+      expect(context._response._headers['Access-Control-Allow-Origin']).toBe('*');
+      expect(context._response._headers['Access-Control-Allow-Credentials']).toBe('false');
+    });
+
+    it('should echo back validated specific origins (not wildcard)', () => {
+      const config = createCorsConfig({ origin: ['https://trusted.com'] });
+      const context = createTestContext('GET', '/', { origin: 'https://trusted.com' });
+
+      const result = handleCors(context, config);
+
+      expect(result).toBe(true);
+
+      // SECURITY: For specific origins, echo back the validated origin
+      expect(context._response._headers['Access-Control-Allow-Origin']).toBe('https://trusted.com');
+      expect(context._response._headers['Access-Control-Allow-Credentials']).toBe('false');
     });
   });
 
@@ -170,7 +204,7 @@ describe('CORS Functionality', () => {
     });
 
     describe('Origin Handling in OPTIONS Requests', () => {
-      it('should use request origin when provided', () => {
+      it('should use literal wildcard when wildcard origin is configured', () => {
         const config = createCorsConfig({ origin: '*' });
         const context = createTestContext('OPTIONS', '/', {
           origin: 'https://test.com',
@@ -178,7 +212,8 @@ describe('CORS Functionality', () => {
 
         handleCors(context, config);
 
-        expect(context._response._headers['Access-Control-Allow-Origin']).toBe('https://test.com');
+        // SECURITY: Should return literal '*', not echo back the request origin
+        expect(context._response._headers['Access-Control-Allow-Origin']).toBe('*');
       });
 
       it('should use wildcard when no origin header provided', () => {
@@ -190,14 +225,19 @@ describe('CORS Functionality', () => {
         expect(context._response._headers['Access-Control-Allow-Origin']).toBe('*');
       });
 
-      it('should handle missing origin header gracefully', () => {
+      it('should reject requests with missing origin header when specific origins are configured', () => {
         const config = createCorsConfig({ origin: 'https://example.com' });
         const context = createTestContext('OPTIONS');
 
-        handleCors(context, config);
+        const result = handleCors(context, config);
 
-        // Should still set headers even without origin
-        expect(context._response._headers['Access-Control-Allow-Origin']).toBe('*'); // Fallback
+        // SECURITY: Should reject requests without origin when specific origins are required
+        expect(result).toBe(true); // Returns true because CORS handled the rejection
+        expect(context._response._statusCode).toBe(403);
+        expect(context._response._body).toEqual({
+          error: 'CORS: Origin not allowed',
+          origin: undefined,
+        });
       });
     });
 
@@ -236,7 +276,7 @@ describe('CORS Functionality', () => {
         });
       });
 
-      it('should handle wildcard origin configuration', () => {
+      it('should handle wildcard origin configuration securely', () => {
         const config = createCorsConfig({ origin: '*' });
         const context = createTestContext('OPTIONS', '/', {
           origin: 'https://any-domain.com',
@@ -244,7 +284,8 @@ describe('CORS Functionality', () => {
 
         handleCors(context, config);
 
-        expect(context._response._headers['Access-Control-Allow-Origin']).toBe('https://any-domain.com');
+        // SECURITY: Should return literal '*', not echo back any requesting origin
+        expect(context._response._headers['Access-Control-Allow-Origin']).toBe('*');
       });
 
       it('should handle array of allowed origins', () => {
@@ -338,6 +379,183 @@ describe('CORS Functionality', () => {
         // Should not throw and should still set headers
         expect(() => handleCors(context, config)).not.toThrow();
         expect(context._response._headers).toBeDefined();
+      });
+    });
+  });
+
+  describe('Origin Validation Security', () => {
+    it('should reject unauthorized origins in OPTIONS requests with 403', () => {
+      const config = createCorsConfig({
+        origin: ['https://allowed.com'],
+        credentials: true,
+      });
+      const context = createTestContext('OPTIONS', '/', {
+        origin: 'https://malicious.com',
+        'Access-Control-Request-Method': 'POST',
+      });
+
+      const result = handleCors(context, config);
+
+      expect(result).toBe(true); // Returns true because CORS handled the rejection
+      expect(context._response._statusCode).toBe(403);
+      expect(context._response._body).toEqual({
+        error: 'CORS: Origin not allowed',
+        origin: 'https://malicious.com',
+      });
+    });
+
+    it('should not add CORS headers to non-OPTIONS requests from unauthorized origins', () => {
+      const config = createCorsConfig({
+        origin: ['https://allowed.com'],
+      });
+      const context = createTestContext('GET', '/', {
+        origin: 'https://malicious.com',
+      });
+
+      const result = handleCors(context, config);
+
+      expect(result).toBe(true);
+      expect(context._response._headers['Access-Control-Allow-Origin']).toBeUndefined();
+      expect(context._response._headers['Access-Control-Allow-Credentials']).toBeUndefined();
+    });
+
+    it('should add CORS headers to non-OPTIONS requests from authorized origins', () => {
+      const config = createCorsConfig({
+        origin: ['https://allowed.com'],
+        credentials: true,
+      });
+      const context = createTestContext('POST', '/', {
+        origin: 'https://allowed.com',
+      });
+
+      const result = handleCors(context, config);
+
+      expect(result).toBe(true);
+      expect(context._response._headers['Access-Control-Allow-Origin']).toBe('https://allowed.com');
+      expect(context._response._headers['Access-Control-Allow-Credentials']).toBe('true');
+    });
+
+    it('should block dangerous wildcard + credentials combination', () => {
+      const config = createCorsConfig({
+        origin: '*',
+        credentials: true,
+      });
+      const context = createTestContext('OPTIONS', '/', {
+        origin: 'https://any-site.com',
+      });
+
+      // Should throw an error instead of just warning
+      expect(() => handleCors(context, config)).toThrow(
+        'CORS Security Error: origin: "*" with credentials: true is forbidden by CORS spec and creates security vulnerabilities. Use specific origins instead.',
+      );
+    });
+
+    it('should validate origins case-insensitively', () => {
+      const config = createCorsConfig({
+        origin: ['https://example.com'],
+      });
+
+      const testCases = ['https://example.com', 'HTTPS://EXAMPLE.COM', 'https://Example.Com'];
+
+      testCases.forEach((origin) => {
+        const context = createTestContext('GET', '/', { origin });
+        const result = handleCors(context, config);
+
+        expect(result).toBe(true);
+        expect(context._response._headers['Access-Control-Allow-Origin']).toBe(origin);
+      });
+    });
+
+    it('should handle function-based origin validation securely', () => {
+      const allowedDomains = ['trusted.com'];
+      const originValidator = (origin: string | undefined) => {
+        if (!origin) return false;
+        try {
+          const url = new URL(origin);
+          return allowedDomains.includes(url.hostname);
+        } catch {
+          return false;
+        }
+      };
+
+      const config = createCorsConfig({ origin: originValidator });
+
+      // Test authorized origin
+      const authorizedContext = createTestContext('OPTIONS', '/', {
+        origin: 'https://trusted.com',
+      });
+      const authorizedResult = handleCors(authorizedContext, config);
+      expect(authorizedResult).toBe(false); // OPTIONS handled
+      expect(authorizedContext._response._statusCode).toBe(204);
+
+      // Test unauthorized origin
+      const unauthorizedContext = createTestContext('OPTIONS', '/', {
+        origin: 'https://malicious.com',
+      });
+      const unauthorizedResult = handleCors(unauthorizedContext, config);
+      expect(unauthorizedResult).toBe(true); // Returns true because CORS handled the rejection
+      expect(unauthorizedContext._response._statusCode).toBe(403);
+    });
+
+    it('should handle RegExp-based origin validation securely', () => {
+      const config = createCorsConfig({
+        origin: /^https:\/\/.*\.trusted\.com$/,
+      });
+
+      // Test authorized subdomain
+      const authorizedContext = createTestContext('GET', '/', {
+        origin: 'https://api.trusted.com',
+      });
+      const authorizedResult = handleCors(authorizedContext, config);
+      expect(authorizedResult).toBe(true);
+      expect(authorizedContext._response._headers['Access-Control-Allow-Origin']).toBe('https://api.trusted.com');
+
+      // Test unauthorized domain
+      const unauthorizedContext = createTestContext('GET', '/', {
+        origin: 'https://api.malicious.com',
+      });
+      const unauthorizedResult = handleCors(unauthorizedContext, config);
+      expect(unauthorizedResult).toBe(true);
+      expect(unauthorizedContext._response._headers['Access-Control-Allow-Origin']).toBeUndefined();
+    });
+
+    describe('Edge Cases and Attack Vectors', () => {
+      it('should handle malformed origins safely', () => {
+        const config = createCorsConfig({
+          origin: ['https://trusted.com'],
+        });
+
+        const malformedOrigins = [
+          '',
+          'null',
+          'javascript:alert(1)',
+          'data:text/html,<script>alert(1)</script>',
+          'not-a-url',
+          'http://trusted.com.evil.com', // subdomain attack
+        ];
+
+        malformedOrigins.forEach((origin) => {
+          const context = createTestContext('OPTIONS', '/', { origin });
+
+          expect(() => handleCors(context, config)).not.toThrow();
+          expect(context._response._statusCode).toBe(403);
+        });
+      });
+
+      it('should never echo back unauthorized origins', () => {
+        const config = createCorsConfig({
+          origin: ['https://trusted.com'],
+        });
+
+        const context = createTestContext('OPTIONS', '/', {
+          origin: 'https://malicious.com',
+        });
+
+        handleCors(context, config);
+
+        // Should not echo back the malicious origin
+        expect(context._response._headers['Access-Control-Allow-Origin']).not.toBe('https://malicious.com');
+        expect(context._response._statusCode).toBe(403);
       });
     });
   });

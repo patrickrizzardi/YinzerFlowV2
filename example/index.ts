@@ -5,10 +5,12 @@ const app = new YinzerFlow({
   logLevel: 'verbose',
   cors: {
     enabled: true,
-    origin: '*',
-    exposedHeaders: ['*'],
-    allowedHeaders: ['*'],
-    methods: ['*'],
+    // SECURITY: Use specific origins instead of wildcard when credentials are enabled
+    // The CORS spec prohibits origin '*' with credentials: true
+    origin: ['http://localhost:3000', 'https://yourapp.com'],
+    exposedHeaders: ['X-Total-Count', 'X-Page-Info'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
     maxAge: 86400,
     preflightContinue: false,
