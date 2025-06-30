@@ -14,12 +14,12 @@ export interface ParseBodyOptions {
   /**
    * Content-Type header value
    */
-  headerContentType?: InternalContentType;
+  headerContentType?: InternalContentType | undefined;
 
   /**
    * Multipart boundary (for multipart/form-data)
    */
-  boundary?: string;
+  boundary?: string | undefined;
 
   /**
    * Body parser security configuration

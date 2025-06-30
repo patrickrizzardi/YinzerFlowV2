@@ -59,7 +59,7 @@ export class RequestImpl implements InternalRequestImpl {
 
     // Extract content type and boundary for body parsing
     const contentTypeHeader = headers['content-type'];
-    const mainContentType = contentTypeHeader?.split(';')[0]?.trim().toLowerCase() as InternalContentType | undefined;
+    const mainContentType = contentTypeHeader?.split(';')[0]?.trim().toLowerCase() as InternalContentType;
     const boundary = extractBoundaryFromHeader(contentTypeHeader);
 
     return {
@@ -67,7 +67,11 @@ export class RequestImpl implements InternalRequestImpl {
       path,
       protocol,
       headers,
-      body: parseBody(rawBody, mainContentType, boundary),
+      body: parseBody(rawBody, {
+        headerContentType: mainContentType,
+        boundary,
+        config: this._setup._configuration.bodyParser,
+      }),
       query: parseQuery(path),
       params: route?.params ?? {},
       rawBody,

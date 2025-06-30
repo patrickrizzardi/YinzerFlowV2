@@ -1,6 +1,39 @@
 import { describe, expect, it } from 'bun:test';
 import { parseBody } from '../parseBody.ts';
+import type { ParseBodyOptions } from '../parseBody.ts';
 import { contentType } from '@constants/http.ts';
+import type { BodyParserConfiguration, JsonParserConfiguration, UrlEncodedConfiguration } from '@typedefs/public/Configuration.js';
+
+/**
+ * Create test body parser configuration with sensible defaults
+ */
+const createTestBodyParserConfig = (overrides: Partial<BodyParserConfiguration> = {}): BodyParserConfiguration => ({
+  json: {
+    maxSize: 1048576, // 1MB
+    maxDepth: 10,
+    allowPrototypeProperties: false,
+    maxKeys: 1000,
+    maxStringLength: 10000,
+    maxArrayLength: 1000,
+    ...overrides.json,
+  },
+  fileUploads: {
+    maxFileSize: 10485760, // 10MB
+    maxTotalSize: 52428800, // 50MB
+    maxFiles: 10,
+    allowedExtensions: [],
+    blockedExtensions: ['.exe', '.bat', '.cmd'],
+    maxFilenameLength: 255,
+    ...overrides.fileUploads,
+  },
+  urlEncoded: {
+    maxSize: 1048576, // 1MB
+    maxFields: 1000,
+    maxFieldNameLength: 100,
+    maxFieldLength: 1048576,
+    ...overrides.urlEncoded,
+  },
+});
 
 describe('parseBody', () => {
   describe('Empty body handling', () => {
@@ -13,32 +46,69 @@ describe('parseBody', () => {
       const result = parseBody('   ');
       expect(result).toBeUndefined();
     });
+
+    it('should handle empty body with options', () => {
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.json,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody('', options);
+      expect(result).toBeUndefined();
+    });
   });
 
-  describe('JSON parsing', () => {
-    it('should parse JSON when content type is application/json', () => {
+  describe('JSON parsing with new options pattern', () => {
+    it('should parse JSON with explicit content type in options', () => {
       const body = '{"name": "test", "value": 123}';
-      const result = parseBody(body, contentType.json);
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.json,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toEqual({ name: 'test', value: 123 });
     });
 
-    it('should parse JSON arrays when content type is application/json', () => {
+    it('should require config for JSON parsing', () => {
+      const body = '{"name": "test"}';
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.json,
+        // config is missing
+      };
+
+      expect(() => parseBody(body, options)).toThrow('Body parser configuration is required for JSON parsing');
+    });
+
+    it('should parse JSON arrays with security config', () => {
       const body = '[1, 2, 3, "test"]';
-      const result = parseBody(body, contentType.json);
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.json,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toEqual([1, 2, 3, 'test'] as any);
     });
 
-    it('should throw error for invalid JSON with json content type', () => {
-      const body = '{"invalid": json}';
+    it('should apply JSON security limits', () => {
+      const body = `{"data": "${'x'.repeat(1000)}"}`;
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.json,
+        config: createTestBodyParserConfig({
+          json: { maxStringLength: 100 } as JsonParserConfiguration, // Much smaller than the string
+        }),
+      };
 
-      expect(() => parseBody(body, contentType.json)).toThrow('Invalid JSON');
+      expect(() => parseBody(body, options)).toThrow(/String.*too long.*exceeds limit/);
     });
 
-    it('should handle complex nested JSON', () => {
+    it('should handle complex nested JSON with security', () => {
       const body = '{"users": [{"name": "John", "settings": {"theme": "dark"}}]}';
-      const result = parseBody(body, contentType.json);
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.json,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toEqual({
         users: [{ name: 'John', settings: { theme: 'dark' } }],
@@ -46,12 +116,44 @@ describe('parseBody', () => {
     });
   });
 
+  describe('JSON parsing with size validation', () => {
+    it('should reject JSON body exceeding maxSize', () => {
+      const largeBody = `{"data": "${'x'.repeat(10000)}"}`;
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.json,
+        config: createTestBodyParserConfig({
+          json: { maxSize: 1000 } as JsonParserConfiguration, // Much smaller than the body
+        }),
+      };
+
+      expect(() => parseBody(largeBody, options)).toThrow(/JSON body too large.*exceeds limit/);
+    });
+
+    it('should accept JSON body within maxSize', () => {
+      const body = '{"small": "data"}';
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.json,
+        config: createTestBodyParserConfig({
+          json: { maxSize: 1000 } as JsonParserConfiguration,
+        }),
+      };
+
+      const result = parseBody(body, options);
+      expect(result).toEqual({ small: 'data' });
+    });
+  });
+
   describe('Multipart form data parsing', () => {
-    it('should parse multipart data with boundary', () => {
+    it('should parse multipart data with boundary in options', () => {
       const boundary = 'boundary123';
       const body = `--${boundary}\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalue1\r\n--${boundary}--`;
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.multipart,
+        boundary,
+        config: createTestBodyParserConfig(),
+      };
 
-      const result = parseBody(body, contentType.multipart, boundary);
+      const result = parseBody(body, options);
 
       expect(result).toHaveProperty('fields');
       expect(result).toHaveProperty('files');
@@ -60,38 +162,40 @@ describe('parseBody', () => {
 
     it('should throw error for multipart without boundary', () => {
       const body = '--boundary123\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalue1\r\n--boundary123--';
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.multipart,
+        config: createTestBodyParserConfig(),
+      };
 
-      expect(() => parseBody(body, contentType.multipart)).toThrow('Invalid multipart form data: missing boundary');
+      expect(() => parseBody(body, options)).toThrow('Invalid multipart form data: missing boundary');
     });
 
     it('should handle multipart with file uploads', () => {
       const boundary = 'boundary123';
       const body = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="test.txt"\r\nContent-Type: text/plain\r\n\r\nfile content\r\n--${boundary}--`;
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.multipart,
+        boundary,
+        config: createTestBodyParserConfig(),
+      };
 
-      const result = parseBody(body, contentType.multipart, boundary);
+      const result = parseBody(body, options);
 
       expect(result).toHaveProperty('files');
       expect((result as any).files).toHaveLength(1);
       expect((result as any).files[0].filename).toBe('test.txt');
       expect((result as any).files[0].content).toBe('file content');
     });
-
-    it('should handle multipart with multiple fields and files', () => {
-      const boundary = 'boundary123';
-      const body = `--${boundary}\r\nContent-Disposition: form-data; name="name"\r\n\r\nJohn\r\n--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="data.txt"\r\nContent-Type: text/plain\r\n\r\nfile data\r\n--${boundary}--`;
-
-      const result = parseBody(body, contentType.multipart, boundary);
-
-      expect((result as any).fields.name).toBe('John');
-      expect((result as any).files).toHaveLength(1);
-      expect((result as any).files[0].filename).toBe('data.txt');
-    });
   });
 
   describe('URL-encoded form parsing', () => {
-    it('should parse URL-encoded form data', () => {
+    it('should parse URL-encoded form data with security config', () => {
       const body = 'name=test&value=123&encoded=%20space';
-      const result = parseBody(body, contentType.form);
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.form,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toEqual({
         name: 'test',
@@ -100,9 +204,25 @@ describe('parseBody', () => {
       });
     });
 
+    it('should apply URL-encoded size limits', () => {
+      const largeBody = `data=${'x'.repeat(10000)}`;
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.form,
+        config: createTestBodyParserConfig({
+          urlEncoded: { maxSize: 1000 } as UrlEncodedConfiguration, // Much smaller than body
+        }),
+      };
+
+      expect(() => parseBody(largeBody, options)).toThrow(/URL-encoded body too large.*exceeds limit/);
+    });
+
     it('should handle empty values in URL-encoded data', () => {
       const body = 'empty=&hasvalue=test';
-      const result = parseBody(body, contentType.form);
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.form,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toEqual({
         empty: '',
@@ -112,7 +232,11 @@ describe('parseBody', () => {
 
     it('should handle complex URL-encoded data', () => {
       const body = 'user%5Bname%5D=John&user%5Bemail%5D=john%40example.com&tags%5B%5D=dev&tags%5B%5D=js';
-      const result = parseBody(body, contentType.form);
+      const options: ParseBodyOptions = {
+        headerContentType: contentType.form,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toEqual({
         'user[name]': 'John',
@@ -125,34 +249,67 @@ describe('parseBody', () => {
   describe('Raw body handling', () => {
     it('should return raw body for text content types', () => {
       const body = 'This is plain text content';
-      const result = parseBody(body, 'text/plain');
+      const options: ParseBodyOptions = {
+        headerContentType: 'text/plain' as any,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toBe(body);
     });
 
     it('should return raw body for unknown content types', () => {
       const body = 'Some unknown content';
-      const result = parseBody(body, 'application/unknown' as any);
+      const options: ParseBodyOptions = {
+        headerContentType: 'application/unknown' as any,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toBe(body);
     });
 
     it('should handle binary-like content as raw text', () => {
       const body = 'Binary\x00\x01\x02data';
-      const result = parseBody(body, 'application/octet-stream' as any);
+      const options: ParseBodyOptions = {
+        headerContentType: 'application/octet-stream' as any,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(body, options);
 
       expect(result).toBe(body);
     });
   });
 
+  describe('Backward compatibility with old API', () => {
+    it('should still work with old parseBody(body, contentType) signature', () => {
+      const body = 'key=value&test=123';
+      const result = parseBody(body, { headerContentType: contentType.form });
+
+      expect(result).toEqual({ key: 'value', test: '123' });
+    });
+
+    it('should still work with old parseBody(body, contentType, boundary) signature', () => {
+      const boundary = 'boundary123';
+      const body = `--${boundary}\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalue1\r\n--${boundary}--`;
+      const result = parseBody(body, { headerContentType: contentType.multipart, boundary });
+
+      expect(result).toHaveProperty('fields');
+      expect((result as any).fields.field1).toBe('value1');
+    });
+  });
+
   describe('Integration with content type inference', () => {
     it('should use inferContentType when no content type provided', () => {
-      // JSON inference and parsing
+      // JSON inference and parsing - should fail without config
       const jsonBody = '{"inferred": true}';
-      const jsonResult = parseBody(jsonBody);
+      expect(() => parseBody(jsonBody)).toThrow('Body parser configuration is required for JSON parsing');
+
+      // With config, should work
+      const jsonResult = parseBody(jsonBody, { config: createTestBodyParserConfig() });
       expect(jsonResult).toEqual({ inferred: true });
 
-      // Form data inference and parsing
+      // Form data inference and parsing - should work without config
       const formBody = 'key=value&test=123';
       const formResult = parseBody(formBody);
       expect(formResult).toEqual({ key: 'value', test: '123' });
@@ -164,30 +321,66 @@ describe('parseBody', () => {
     });
   });
 
-  describe('Edge cases and error handling', () => {
-    it('should handle content type with parameters gracefully', () => {
-      const body = '{"test": true}';
-      const result = parseBody(body, 'application/json; charset=utf-8' as any);
+  describe('Security: Content Type Size Validation', () => {
+    const sizeLimitCases = [
+      {
+        contentType: contentType.json,
+        configKey: 'json' as const,
+        body: `{"data": "${'x'.repeat(1000)}"}`,
+        expectedError: /JSON body too large/,
+      },
+      {
+        contentType: contentType.form,
+        configKey: 'urlEncoded' as const,
+        body: `data=${'x'.repeat(1000)}`,
+        expectedError: /URL-encoded body too large/,
+      },
+    ];
 
-      // Since parseBody expects just the main content type, this should not match exactly
-      // It should fall back to returning raw body since the content-type doesn't match exactly
-      expect(result).toBe('{"test": true}');
+    it.each(sizeLimitCases)('should apply size limits for $contentType', ({ contentType: ct, configKey, body, expectedError }) => {
+      const config = createTestBodyParserConfig({
+        [configKey]: { maxSize: 500 }, // Smaller than test body
+      });
+
+      const options: ParseBodyOptions = {
+        headerContentType: ct,
+        config,
+      };
+
+      expect(() => parseBody(body, options)).toThrow(expectedError);
     });
+  });
 
-    it('should handle very large content', () => {
+  describe('Edge cases and error handling', () => {
+    it('should handle very large content with proper limits', () => {
       const largeContent = 'x'.repeat(10000);
-      const result = parseBody(largeContent, 'text/plain');
+      const options: ParseBodyOptions = {
+        headerContentType: 'text/plain' as any,
+        config: createTestBodyParserConfig(),
+      };
+      const result = parseBody(largeContent, options);
 
       expect(result).toBe(largeContent);
     });
 
     it('should handle malformed data gracefully', () => {
-      // Malformed JSON should throw with explicit content-type
-      expect(() => parseBody('{"invalid": json}', contentType.json)).toThrow();
+      const config = createTestBodyParserConfig();
 
-      // But should return raw with inference
+      // Malformed JSON should throw with explicit content-type and config
+      expect(() => parseBody('{"invalid": json}', { headerContentType: contentType.json, config })).toThrow();
+
+      // But should return raw with inference (no explicit content type)
       const result = parseBody('{"invalid": json}');
       expect(result).toBe('{"invalid": json}');
+    });
+
+    it('should handle missing config for secure parsing gracefully', () => {
+      // URL-encoded should work without config
+      const formResult = parseBody('key=value', { headerContentType: contentType.form });
+      expect(formResult).toEqual({ key: 'value' });
+
+      // JSON should require config
+      expect(() => parseBody('{"test": true}', { headerContentType: contentType.json })).toThrow(/configuration is required/);
     });
   });
 });

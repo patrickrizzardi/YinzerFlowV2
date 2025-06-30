@@ -1,4 +1,5 @@
 import type { InternalContentDisposition, InternalFileUpload, InternalMultipartFormData } from '@typedefs/internal/InternalRequestImpl.ts';
+import type { FileUploadConfiguration } from '@typedefs/public/Configuration.js';
 
 /**
  * Split a multipart section into headers and content
@@ -102,22 +103,58 @@ const isBinaryContent = (contentTypeValue: string): boolean => {
 const calculateContentLength = (content: Buffer | string): number => (Buffer.isBuffer(content) ? content.length : Buffer.byteLength(content, 'utf8'));
 
 /**
- * Handle file upload processing with binary support
+ * Validate file against security configuration
+ */
+const _validateFileUpload = (file: InternalFileUpload, config?: FileUploadConfiguration): void => {
+  if (!config) return;
+
+  // SECURITY: Check file size
+  if (file.size > config.maxFileSize) {
+    throw new Error(`File too large: ${file.filename} is ${file.size} bytes, exceeds limit of ${config.maxFileSize} bytes`);
+  }
+
+  // SECURITY: Check filename length
+  if (file.filename && file.filename.length > config.maxFilenameLength) {
+    throw new Error(`Filename too long: ${file.filename.length} characters exceeds limit of ${config.maxFilenameLength}`);
+  }
+
+  // SECURITY: Check file extension
+  if (file.filename) {
+    const extension = file.filename.toLowerCase().substring(file.filename.lastIndexOf('.'));
+
+    // Check blocked extensions
+    if (config.blockedExtensions.includes(extension)) {
+      throw new Error(`File type not allowed: ${extension} files are blocked for security reasons`);
+    }
+
+    // Check allowed extensions (if specified)
+    if (config.allowedExtensions.length > 0 && !config.allowedExtensions.includes(extension)) {
+      throw new Error(`File type not allowed: ${extension} is not in the allowed extensions list`);
+    }
+  }
+};
+
+/**
+ * Handle file upload processing with binary support and security validation
  *
  * @example
  * ```ts
  * handleFileUpload({
  *   contentDisposition: { name: 'file', filename: 'example.txt' },
  *   contentSection: 'This is the content of the file.\r\n',
+ * });
+ * ```
  */
 const handleFileUpload = ({
   contentDisposition,
   contentSection,
   headersSection,
+  config,
 }: {
   contentDisposition: InternalContentDisposition;
   contentSection: string;
   headersSection: string;
+  config?: FileUploadConfiguration | undefined;
 }): InternalFileUpload => {
   const contentTypeValue = extractSectionContentType(headersSection);
 
@@ -127,24 +164,36 @@ const handleFileUpload = ({
   // For binary files, convert string to Buffer
   const content: Buffer | string = isBinaryContent(contentTypeValue) ? Buffer.from(trimmedContent, 'binary') : trimmedContent;
 
-  return {
+  const file: InternalFileUpload = {
     filename: contentDisposition.filename ?? '',
     contentType: contentTypeValue,
     size: calculateContentLength(content),
     content,
   };
+
+  // SECURITY: Validate file against configuration
+  _validateFileUpload(file, config);
+
+  return file;
 };
 
 /**
- * Parse multipart form data request body with binary file support
+ * Parse multipart form data request body with binary file support and security protections
+ *
+ * Security Features:
+ * - File size validation per file and total
+ * - File extension filtering (allow/block lists)
+ * - Filename length validation
+ * - File count limits
  *
  * @example
  * ```ts
- * parseMultipartFormData('Content-Disposition: form-data; name="file"; filename="example.txt"\r\nContent-Type: text/plain\r\n\r\nThis is the content of the file.\r\n', 'boundary');
- * // Returns { fields: { file: 'This is the content of the file.\r\n' }, files: [{ filename: 'example.txt', contentType: 'text/plain', size: 13, content: 'This is the content of the file.\r\n' }] }
+ * const config = { maxFileSize: 10485760, maxFiles: 10, blockedExtensions: ['.exe'] };
+ * parseMultipartFormData('...multipart body...', 'boundary123', config);
+ * // Returns { fields: { ... }, files: [...] }
  * ```
  */
-export const parseMultipartFormData = (body: string, boundary: string): InternalMultipartFormData => {
+export const parseMultipartFormData = (body: string, boundary: string, config?: FileUploadConfiguration): InternalMultipartFormData => {
   const result: InternalMultipartFormData = {
     fields: {},
     files: [],
@@ -152,6 +201,8 @@ export const parseMultipartFormData = (body: string, boundary: string): Internal
 
   // Split the body into parts using the boundary
   const parts = body.split(`--${boundary}`).slice(1); // Skip the first empty part
+
+  let totalFileSize = 0;
 
   for (const part of parts) {
     // Skip empty parts and the final boundary marker
@@ -171,11 +222,25 @@ export const parseMultipartFormData = (body: string, boundary: string): Internal
 
     // Handle file upload
     if (contentDisposition.filename !== undefined) {
+      // SECURITY: Check file count limit
+      if (config && result.files.length >= config.maxFiles) {
+        throw new Error(`Too many files: maximum of ${config.maxFiles} files allowed per request`);
+      }
+
       const file = handleFileUpload({
         contentDisposition,
         contentSection,
         headersSection,
+        config,
       });
+
+      totalFileSize += file.size;
+
+      // SECURITY: Check total file size
+      if (config && totalFileSize > config.maxTotalSize) {
+        throw new Error(`Total file size too large: ${totalFileSize} bytes exceeds limit of ${config.maxTotalSize} bytes`);
+      }
+
       result.files.push(file);
     }
 

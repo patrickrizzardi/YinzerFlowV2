@@ -90,10 +90,7 @@ YinzerFlow automatically handles request parsing errors and provides clear error
 - `Header value too long: maximum 8192 characters allowed`
 - `Header value contains invalid control characters`
 
-**Body parsing errors:**
-- `Invalid JSON in request body`
-- `Multipart form data requires boundary parameter`
-- `Unable to parse URL-encoded form data`
+**Body parsing errors:** See [Body Parsing Documentation](./body-parsing.md) for detailed error handling
 
 These errors automatically result in appropriate HTTP status codes (400 Bad Request) and prevent malformed requests from reaching your application handlers.
 
@@ -113,13 +110,9 @@ YinzerFlow implements several security measures to prevent common request-based 
 - **Problem**: Control characters in headers can cause parsing errors and bypass security filters
 - **YinzerFlow Solution**: Automatic removal of dangerous control characters while preserving legitimate characters like horizontal tabs
 
-### 🛡️ Body Size Validation
-- **Problem**: Unlimited request body sizes can cause memory exhaustion and DoS attacks
-- **YinzerFlow Solution**: Request body size limits and streaming parsing prevent memory-based attacks
-
-### 🛡️ JSON Parsing Protection
-- **Problem**: Malformed JSON can cause parsing errors or prototype pollution attacks
-- **YinzerFlow Solution**: Safe JSON parsing with error handling and validation prevents malicious payloads
+### 🛡️ Body Parsing Protection
+- **Problem**: Malformed request bodies can cause parsing errors, memory exhaustion, or security vulnerabilities
+- **YinzerFlow Solution**: Comprehensive body parsing security with size limits, validation, and protection against common attacks - see [Body Parsing Documentation](./body-parsing.md)
 
 ### 🛡️ Parameter Pollution Prevention
 - **Problem**: Duplicate query parameters can bypass validation or cause unexpected behavior
@@ -132,5 +125,21 @@ YinzerFlow implements several security measures to prevent common request-based 
 ### 🛡️ IP Address Validation
 - **Problem**: Spoofed proxy headers can bypass IP-based security controls
 - **YinzerFlow Solution**: Secure IP address extraction with proxy header validation prevents spoofing attacks
+
+## Body Parsing
+
+YinzerFlow automatically parses request bodies (JSON, file uploads, forms) with built-in security protections. Parsed data is available on `request.body` - see [Body Parsing Documentation](./body-parsing.md) for detailed configuration options, examples, and security considerations.
+
+```typescript
+app.post('/api/users', ({ request, response }) => {
+  // Body is automatically parsed based on Content-Type
+  const userData = request.body;
+  
+  return {
+    message: 'User created successfully',
+    data: userData
+  };
+});
+```
 
 These security measures ensure YinzerFlow's request implementation follows security best practices and prevents common attack vectors while maintaining RFC compliance and performance. 
