@@ -22,6 +22,12 @@ export interface ServerConfiguration {
   cors: CorsConfiguration;
 
   /**
+   * Body parsing security configuration
+   * @default { json: { maxSize: 262144, maxDepth: 10, allowPrototypeProperties: false, maxKeys: 1000 }, fileUploads: { maxSize: 10485760, maxFiles: 10 } }
+   */
+  bodyParser: BodyParserConfiguration;
+
+  /**
    * Logging level for YinzerFlow server
    * - 'off': No logging (silent mode)
    * - 'verbose': Application logging with Pittsburgh personality (level 1)
@@ -184,4 +190,154 @@ export interface ConnectionOptions {
    * before the keep-alive timeout has expired.
    */
   headersTimeout: number;
+}
+
+/**
+ * Body Parser Security Configuration
+ * Protects against DoS attacks, prototype pollution, and memory exhaustion
+ */
+export interface BodyParserConfiguration {
+  /**
+   * JSON parsing security configuration
+   */
+  json: JsonParserConfiguration;
+
+  /**
+   * File upload security configuration
+   */
+  fileUploads: FileUploadConfiguration;
+
+  /**
+   * URL-encoded form data configuration
+   */
+  urlEncoded: UrlEncodedConfiguration;
+}
+
+/**
+ * JSON Parser Security Configuration
+ * Protects against JSON-specific attacks like prototype pollution and DoS
+ */
+export interface JsonParserConfiguration {
+  /**
+   * Maximum JSON request body size in bytes
+   * @default 262144 (256KB) - reasonable for API payloads
+   * @min 1024 (1KB)
+   */
+  maxSize: number;
+
+  /**
+   * Maximum JSON nesting depth to prevent stack overflow attacks
+   * @default 10
+   * @min 1
+   */
+  maxDepth: number;
+
+  /**
+   * Allow prototype properties (__proto__, constructor, prototype) in JSON
+   * SECURITY WARNING: Setting this to true enables prototype pollution attacks
+   * @default false
+   */
+  allowPrototypeProperties: boolean;
+
+  /**
+   * Maximum number of keys in JSON objects to prevent memory exhaustion
+   * @default 1000
+   * @min 10
+   */
+  maxKeys: number;
+
+  /**
+   * Maximum length of JSON string values to prevent memory exhaustion
+   * @default 1048576 (1MB)
+   * @min 100
+   */
+  maxStringLength: number;
+
+  /**
+   * Maximum number of array elements to prevent memory exhaustion
+   * @default 10000
+   * @min 10
+   */
+  maxArrayLength: number;
+}
+
+/**
+ * File Upload Security Configuration
+ * Protects against file upload attacks and resource exhaustion
+ */
+export interface FileUploadConfiguration {
+  /**
+   * Maximum size per file in bytes
+   * @default 10485760 (10MB) - reasonable for documents/images
+   * @min 1024 (1KB)
+   */
+  maxFileSize: number;
+
+  /**
+   * Maximum total size of all files in a single request
+   * @default 52428800 (50MB)
+   * @min 1024 (1KB)
+   */
+  maxTotalSize: number;
+
+  /**
+   * Maximum number of files per request
+   * @default 10
+   * @min 1
+   */
+  maxFiles: number;
+
+  /**
+   * Allowed file extensions (empty array allows all)
+   * @default [] (all extensions allowed)
+   * @example ['.jpg', '.png', '.pdf', '.txt']
+   */
+  allowedExtensions: Array<string>;
+
+  /**
+   * Blocked file extensions for security
+   * @default ['.exe', '.bat', '.cmd', '.scr', '.pif', '.com']
+   */
+  blockedExtensions: Array<string>;
+
+  /**
+   * Maximum filename length to prevent path issues
+   * @default 255
+   * @min 10
+   */
+  maxFilenameLength: number;
+}
+
+/**
+ * URL-Encoded Form Configuration
+ * Protects against form data attacks
+ */
+export interface UrlEncodedConfiguration {
+  /**
+   * Maximum URL-encoded form data size in bytes
+   * @default 1048576 (1MB)
+   * @min 1024 (1KB)
+   */
+  maxSize: number;
+
+  /**
+   * Maximum number of form fields
+   * @default 1000
+   * @min 10
+   */
+  maxFields: number;
+
+  /**
+   * Maximum field name length
+   * @default 100
+   * @min 5
+   */
+  maxFieldNameLength: number;
+
+  /**
+   * Maximum field value length
+   * @default 1048576 (1MB)
+   * @min 100
+   */
+  maxFieldLength: number;
 }

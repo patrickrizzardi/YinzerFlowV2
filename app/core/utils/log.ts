@@ -9,6 +9,8 @@ import type { CreateEnum } from '@typedefs/internal/Generics.js';
  * Direct logging for maximum performance with consistent formatting and colors.
  */
 
+const logPrefix = 'YINZER';
+
 const logLevels = {
   info: 1,
   warn: 2,
@@ -53,7 +55,7 @@ const info = (message: string, data?: unknown): void => {
   const timestamp = formatTimestamp();
   const phrase = getRandomPhrase('positive');
   const dataText = data ? ` ${JSON.stringify(data, null, 0)}` : '';
-  console.info(`${colors.cyan}[YINZER] ✅ [${timestamp}] [INFO] ${message}${dataText} - ${phrase}${colors.reset}`);
+  console.info(`${colors.cyan}[${logPrefix}] ✅ [${timestamp}] [INFO] ${message}${dataText} - ${phrase}${colors.reset}`);
 };
 
 const warn = (message: string, data?: unknown): void => {
@@ -61,7 +63,7 @@ const warn = (message: string, data?: unknown): void => {
   const timestamp = formatTimestamp();
   const phrase = getRandomPhrase('neutral');
   const dataText = data ? ` ${JSON.stringify(data, null, 0)}` : '';
-  console.warn(`${colors.yellow}[YINZER] ⚠️ [${timestamp}] [WARN] ${message}${dataText} - ${phrase}${colors.reset}`);
+  console.warn(`${colors.yellow}[${logPrefix}] ⚠️ [${timestamp}] [WARN] ${message}${dataText} - ${phrase}${colors.reset}`);
 };
 
 const error = (message: string, data?: unknown): void => {
@@ -69,7 +71,7 @@ const error = (message: string, data?: unknown): void => {
   const timestamp = formatTimestamp();
   const phrase = getRandomPhrase('negative');
   const dataText = data ? ` ${JSON.stringify(data, null, 0)}` : '';
-  console.error(`${colors.red}[YINZER] ❌ [${timestamp}] [ERROR] ${message}${dataText} - ${phrase}${colors.reset}`);
+  console.error(`${colors.red}[${logPrefix}] ❌ [${timestamp}] [ERROR] ${message}${dataText} - ${phrase}${colors.reset}`);
 };
 
 const success = (message: string, data?: unknown): void => {
@@ -77,7 +79,7 @@ const success = (message: string, data?: unknown): void => {
   const timestamp = formatTimestamp();
   const phrase = getRandomPhrase('positive');
   const dataText = data ? ` ${JSON.stringify(data, null, 0)}` : '';
-  console.log(`${colors.green}[YINZER] 🎉 [${timestamp}] [SUCCESS] ${message}${dataText} - ${phrase}${colors.reset}`);
+  console.log(`${colors.green}[${logPrefix}] 🎉 [${timestamp}] [SUCCESS] ${message}${dataText} - ${phrase}${colors.reset}`);
 };
 
 const perf = (message: string, timeMs: number, data?: unknown): void => {
@@ -116,7 +118,127 @@ const perf = (message: string, timeMs: number, data?: unknown): void => {
 
   const perfData = data ? { ...data, executionTime: `${timeMs}ms` } : { executionTime: `${timeMs}ms` };
   const dataText = ` ${JSON.stringify(perfData, null, 0)}`;
-  console.log(`${colors.orange}[YINZER] ${emoji} [${timestamp}] [PERF] ${message}${dataText} - ${phrase}${colors.reset}`);
+  console.log(`${colors.orange}[${logPrefix}] ${emoji} [${timestamp}] [PERF] ${message}${dataText} - ${phrase}${colors.reset}`);
+};
+
+/**
+ * Calculate response size for logging
+ */
+const _calculateResponseSize = (responseBody: unknown): number => {
+  if (typeof responseBody === 'string') {
+    return Buffer.byteLength(responseBody, 'utf8');
+  }
+
+  if (Buffer.isBuffer(responseBody)) {
+    return responseBody.length;
+  }
+
+  if (typeof responseBody === 'object' && responseBody !== null) {
+    try {
+      return Buffer.byteLength(JSON.stringify(responseBody), 'utf8');
+    } catch {
+      return 0;
+    }
+  }
+
+  return 0;
+};
+
+/**
+ * Get status emoji for response codes
+ */
+const _getStatusEmoji = (statusCode: number): string => {
+  if (statusCode >= 200 && statusCode < 300) return '✅';
+  if (statusCode >= 300 && statusCode < 400) return '🔄';
+  if (statusCode >= 400 && statusCode < 500) return '❌';
+  if (statusCode >= 500) return '💥';
+  return '❓';
+};
+
+/**
+ * Get performance emoji and phrase for response time
+ */
+const _getPerformanceDetails = (timeMs: number): { emoji: string; phrase: string } => {
+  // < 50ms: Truly instant, users can't perceive any delay
+  if (timeMs < 50) {
+    return {
+      emoji: '⚡',
+      phrase: Math.random() < 0.5 ? "lightning quick n'at!" : 'faster than a Stillers touchdown!',
+    };
+  }
+
+  // 50-100ms: Still feels instant for most interactions
+  if (timeMs < 100) {
+    return {
+      emoji: '🔥',
+      phrase: Math.random() < 0.5 ? "that's the way!" : "smooth as butter n'at!",
+    };
+  }
+
+  // 100-200ms: Google's "good" threshold, still very responsive
+  if (timeMs < 200) {
+    return {
+      emoji: '✅',
+      phrase: Math.random() < 0.5 ? 'not bad yinz!' : "keepin' up just fine!",
+    };
+  }
+
+  // 200-500ms: Noticeable but acceptable for complex operations
+  if (timeMs < 500) {
+    return {
+      emoji: '⚠️',
+      phrase: Math.random() < 0.5 ? 'eh, could be better' : "slowin' down a bit there",
+    };
+  }
+
+  // 500ms-1s: Users start getting impatient
+  if (timeMs < 1000) {
+    return {
+      emoji: '🐌',
+      phrase: Math.random() < 0.5 ? "that's draggin' n'at" : "c'mon, pick up the pace!",
+    };
+  }
+
+  // > 1s: Definitely problematic, needs attention
+  return {
+    emoji: '💥',
+    phrase: Math.random() < 0.5 ? 'what a jagoff response time!' : 'slower than traffic on the Parkway!',
+  };
+};
+
+/**
+ * Log nginx-style access log entry
+ */
+const _logAccessEntry = (options: {
+  clientIp: string;
+  method: string;
+  path: string;
+  protocol: string;
+  statusCode: number;
+  responseSize: number;
+  referer: string;
+  userAgent: string;
+  responseTimeMs: string;
+  statusEmoji: string;
+}): void => {
+  const timestamp = formatTimestamp();
+  const networkTimestamp = formatNetworkTimestamp();
+
+  const { clientIp, method, path, protocol, statusCode, responseSize, referer, userAgent, responseTimeMs, statusEmoji } = options;
+
+  const logEntry = `🏠 ${clientIp} - - [${networkTimestamp}] "${method} ${path} ${protocol}" ${statusCode} ${responseSize}b ${referer} ${userAgent} ${responseTimeMs}ms ${statusEmoji}`;
+  console.log(`${colors.gray}[${logPrefix}] [${timestamp}] [NETWORK] ${logEntry}${colors.reset}`);
+};
+
+/**
+ * Log performance entry with Pittsburgh personality
+ */
+const _logPerformanceEntry = (responseTimeMs: string): void => {
+  const timestamp = formatTimestamp();
+  const timeMs = parseFloat(responseTimeMs);
+  const { emoji, phrase } = _getPerformanceDetails(timeMs);
+
+  console.log(`${colors.orange}[${logPrefix}] ${emoji} [${timestamp}] [PERF] Response time: ${responseTimeMs}ms - ${phrase}${colors.reset}`);
 };
 
 // Network logging functions - direct execution for maximum performance with consistent formatting
@@ -126,84 +248,45 @@ const logRequest = (context: InternalContextImpl, startTime: number, endTime: nu
   const responseTimeMs = (endTime - startTime).toFixed(1);
 
   const clientIp = request.ipAddress || 'unknown';
-  const timestamp = formatTimestamp();
-  const networkTimestamp = formatNetworkTimestamp();
   const { method, path, protocol } = request;
   const statusCode = response._statusCode;
 
   // Calculate response size
-  let responseSize = 0;
-  if (typeof response._body === 'string') {
-    responseSize = Buffer.byteLength(response._body, 'utf8');
-  } else if (Buffer.isBuffer(response._body)) {
-    responseSize = response._body.length;
-  } else if (typeof response._body === 'object' && response._body !== null) {
-    try {
-      responseSize = Buffer.byteLength(JSON.stringify(response._body), 'utf8');
-    } catch {
-      responseSize = 0;
-    }
-  }
+  const responseSize = _calculateResponseSize(response._body);
 
   const referer = request.headers.referer ? `"${request.headers.referer}"` : '"-"';
   const userAgent = request.headers['user-agent'] ? `"${request.headers['user-agent']}"` : '"-"';
-
-  // Status emoji
-  let statusEmoji = '❓';
-  if (statusCode >= 200 && statusCode < 300) statusEmoji = '✅';
-  else if (statusCode >= 300 && statusCode < 400) statusEmoji = '🔄';
-  else if (statusCode >= 400 && statusCode < 500) statusEmoji = '❌';
-  else if (statusCode >= 500) statusEmoji = '💥';
+  const statusEmoji = _getStatusEmoji(statusCode);
 
   // Main nginx-style log with consistent formatting
-  const logEntry = `🏠 ${clientIp} - - [${networkTimestamp}] "${method} ${path} ${protocol}" ${statusCode} ${responseSize}b ${referer} ${userAgent} ${responseTimeMs}ms ${statusEmoji}`;
-  console.log(`${colors.gray}[YINZER] [${timestamp}] [NETWORK] ${logEntry}${colors.reset}`);
+  _logAccessEntry({
+    clientIp,
+    method,
+    path,
+    protocol,
+    statusCode,
+    responseSize,
+    referer,
+    userAgent,
+    responseTimeMs,
+    statusEmoji,
+  });
 
   // Performance log with Pittsburgh personality and consistent formatting
-  const timeMs = parseFloat(responseTimeMs);
-  let perfEmoji = '❓';
-  let phrase = '';
-
-  // < 50ms: Truly instant, users can't perceive any delay
-  if (timeMs < 50) {
-    perfEmoji = '⚡';
-    phrase = Math.random() < 0.5 ? "lightning quick n'at!" : 'faster than a Stillers touchdown!';
-    // 50-100ms: Still feels instant for most interactions
-  } else if (timeMs < 100) {
-    perfEmoji = '🔥';
-    phrase = Math.random() < 0.5 ? "that's the way!" : "smooth as butter n'at!";
-    // 100-200ms: Google's "good" threshold, still very responsive
-  } else if (timeMs < 200) {
-    perfEmoji = '✅';
-    phrase = Math.random() < 0.5 ? 'not bad yinz!' : "keepin' up just fine!";
-    // 200-500ms: Noticeable but acceptable for complex operations
-  } else if (timeMs < 500) {
-    perfEmoji = '⚠️';
-    phrase = Math.random() < 0.5 ? 'eh, could be better' : "slowin' down a bit there";
-    // 500ms-1s: Users start getting impatient
-  } else if (timeMs < 1000) {
-    perfEmoji = '🐌';
-    phrase = Math.random() < 0.5 ? "that's draggin' n'at" : "c'mon, pick up the pace!";
-    // > 1s: Definitely problematic, needs attention
-  } else {
-    perfEmoji = '💥';
-    phrase = Math.random() < 0.5 ? 'what a jagoff response time!' : 'slower than traffic on the Parkway!';
-  }
-
-  console.log(`${colors.orange}[YINZER] ${perfEmoji} [${timestamp}] [PERF] Response time: ${responseTimeMs}ms - ${phrase}${colors.reset}`);
+  _logPerformanceEntry(responseTimeMs);
 };
 
 const logConnection = (event: 'connect' | 'disconnect' | 'error', clientIp?: string, details?: string): void => {
   const timestamp = formatTimestamp();
-  const ip = clientIp || 'unknown';
+  const ip = clientIp ?? 'unknown';
   const eventDetails = details ? ` - ${details}` : '';
 
   if (event === 'connect') {
-    console.log(`${colors.gray}[YINZER] 🤝 [${timestamp}] [NETWORK] New visitor from ${ip} - Welcome to the 'Burgh!${colors.reset}`);
+    console.log(`${colors.gray}[${logPrefix}] 🤝 [${timestamp}] [NETWORK] New visitor from ${ip} - Welcome to the 'Burgh!${colors.reset}`);
   } else if (event === 'disconnect') {
-    console.log(`${colors.gray}[YINZER] 👋 [${timestamp}] [NETWORK] ${ip} headed out - Thanks for stopping by, yinz come back now!${colors.reset}`);
+    console.log(`${colors.gray}[${logPrefix}] 👋 [${timestamp}] [NETWORK] ${ip} headed out - Thanks for stopping by, yinz come back now!${colors.reset}`);
   } else {
-    console.log(`${colors.red}[YINZER] 💥 [${timestamp}] [NETWORK] Connection trouble with ${ip}${eventDetails} - That's not good, n'at!${colors.reset}`);
+    console.log(`${colors.red}[${logPrefix}] 💥 [${timestamp}] [NETWORK] Connection trouble with ${ip}${eventDetails} - That's not good, n'at!${colors.reset}`);
   }
 };
 
@@ -212,7 +295,7 @@ const logServerStart = (port?: number, host?: string): void => {
   const address = port && host ? `${host}:${port}` : 'unknown';
   const phrase = getRandomPhrase('positive');
   console.log(
-    `${colors.gray}[YINZER] 🚀 [${timestamp}] [NETWORK] YinzerFlow server is up and running at ${address} - Ready to serve yinz all, ${phrase}!${colors.reset}`,
+    `${colors.gray}[${logPrefix}] 🚀 [${timestamp}] [NETWORK] YinzerFlow server is up and running at ${address} - Ready to serve yinz all, ${phrase}!${colors.reset}`,
   );
 };
 
@@ -221,7 +304,7 @@ const logServerStop = (port?: number, host?: string): void => {
   const address = port && host ? `${host}:${port}` : 'unknown';
   const phrase = getRandomPhrase('neutral');
   console.log(
-    `${colors.gray}[YINZER] 🛑 [${timestamp}] [NETWORK] YinzerFlow server at ${address} is shutting down - See yinz later, ${phrase}!${colors.reset}`,
+    `${colors.gray}[${logPrefix}] 🛑 [${timestamp}] [NETWORK] YinzerFlow server at ${address} is shutting down - See yinz later, ${phrase}!${colors.reset}`,
   );
 };
 
@@ -230,7 +313,9 @@ const logServerError = (port?: number, host?: string, details?: string): void =>
   const address = port && host ? `${host}:${port}` : 'unknown';
   const eventDetails = details ? ` - ${details}` : '';
   const phrase = getRandomPhrase('negative');
-  console.log(`${colors.red}[YINZER] 💥 [${timestamp}] [NETWORK] Server error at ${address}${eventDetails} - Something's not right, ${phrase}!${colors.reset}`);
+  console.log(
+    `${colors.red}[${logPrefix}] 💥 [${timestamp}] [NETWORK] Server error at ${address}${eventDetails} - Something's not right, ${phrase}!${colors.reset}`,
+  );
 };
 
 // Configuration function
