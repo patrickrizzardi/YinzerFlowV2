@@ -44,36 +44,4 @@ describe('String Utilities', () => {
       expect(result).toEqual(['first', 'second,third']);
     });
   });
-
-  //   describe('calculateContentLength', () => {
-  //     it('should calculate the byte length of a string', () => {
-  //       const body = 'Hello, world!';
-  //       const result = calculateContentLength(body);
-
-  //       expect(result).toBe(13);
-  //     });
-
-  //     it('should handle empty strings', () => {
-  //       const body = '';
-  //       const result = calculateContentLength(body);
-
-  //       expect(result).toBe(0);
-  //     });
-
-  //     it('should handle strings with non-ASCII characters', () => {
-  //       const body = 'Hello, 世界!';
-  //       const result = calculateContentLength(body);
-
-  //       // '世界' is 6 bytes in UTF-8 (3 bytes per character)
-  //       expect(result).toBe(14);
-  //     });
-
-  //     it('should handle strings with emojis', () => {
-  //       const body = 'Hello, 🌍!';
-  //       const result = calculateContentLength(body);
-
-  //       // '🌍' is 4 bytes in UTF-8
-  //       expect(result).toBe(12);
-  //     });
-  //   });
 });

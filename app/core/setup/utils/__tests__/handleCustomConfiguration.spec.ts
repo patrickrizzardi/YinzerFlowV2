@@ -10,6 +10,9 @@ describe('YinzerFlow', () => {
     expect(config.host).toBe('0.0.0.0');
     expect(config.logLevel).toBe(logLevels.off);
     expect(config.proxyHops).toBe(0);
+    expect(config.cors).toBeDefined();
+    expect(config.cors?.enabled).toBe(false);
+    // When CORS is disabled, only 'enabled' property is available
   });
 
   it('should return a custom configuration with the default values', () => {
@@ -21,6 +24,7 @@ describe('YinzerFlow', () => {
     expect(config.host).toBe('0.0.0.0');
     expect(config.logLevel).toBe(logLevels.off);
     expect(config.proxyHops).toBe(0);
+    expect(config.cors?.enabled).toBe(false);
   });
 
   it('should normalize the port number if it is a string', () => {
@@ -34,5 +38,20 @@ describe('YinzerFlow', () => {
 
   it('should throw an error if the port is less than 1', () => {
     expect(() => handleCustomConfiguration({ port: 0 })).toThrow('Invalid port number');
+  });
+
+  it('should handle custom CORS configuration', () => {
+    const config = handleCustomConfiguration({
+      cors: {
+        enabled: true,
+        origin: 'https://example.com',
+        credentials: true,
+      },
+    });
+
+    expect(config.cors?.enabled).toBe(true);
+    expect(config.cors?.origin).toBe('https://example.com');
+    expect(config.cors?.credentials).toBe(true);
+    expect(config.cors?.methods).toEqual(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']); // Should merge with defaults
   });
 });

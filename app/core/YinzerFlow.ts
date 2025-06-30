@@ -12,7 +12,7 @@ export class YinzerFlow extends SetupImpl {
   private _isListening = false;
   private _server?: ReturnType<typeof createServer>;
 
-  constructor(configuration?: ServerConfiguration) {
+  constructor(configuration?: Partial<ServerConfiguration>) {
     super(configuration);
 
     // Initialize logging
@@ -73,9 +73,10 @@ export class YinzerFlow extends SetupImpl {
     }
 
     const context = new ContextImpl(data, this, clientAddress);
+
     await requestHandler.handle(context);
 
-    socket.write(context._response._parseResponseIntoString());
+    socket.write(context._response._stringBody);
     socket.end();
 
     const endTime = Date.now();

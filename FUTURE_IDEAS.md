@@ -33,7 +33,7 @@ Your current request parsing has several areas for improvement:
 private _parseRequest(request: string): IRequest {
   // ...
   const [firstLine, rest] = divideString(request, '\r\n');
-  const [method, path, protocol] = <[THttpMethod, string, string]>firstLine.split(' ', 3);
+  const [method, path, protocol] = <[InternalHttpMethod, string, string]>firstLine.split(' ', 3);
   const [headersRaw, bodyRaw] = divideString(rest, '\r\n\r\n');
   // ...
 }

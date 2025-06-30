@@ -1,9 +1,19 @@
-import { httpHeaders } from '@constants/http.ts';
 import { YinzerFlow } from '@core/YinzerFlow.ts';
 import type { HandlerCallback } from '@typedefs/public/Context.js';
 
 const app = new YinzerFlow({
   logLevel: 'verbose',
+  cors: {
+    enabled: true,
+    origin: '*',
+    exposedHeaders: ['*'],
+    allowedHeaders: ['*'],
+    methods: ['*'],
+    credentials: true,
+    maxAge: 86400,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  },
 });
 
 app.onError((ctx) => {
@@ -25,11 +35,6 @@ app.onNotFound((ctx) => {
 app.beforeAll([
   (ctx) => {
     console.log('======== beforeAll ========');
-    ctx.response.addHeaders({
-      [httpHeaders.contentType]: 'application/json',
-      [httpHeaders.accessControlAllowOrigin]: '*',
-      [httpHeaders.accessControlAllowMethods]: 'GET, POST, PUT, DELETE, OPTIONS',
-    });
   },
 ]);
 

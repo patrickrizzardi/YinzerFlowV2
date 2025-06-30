@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { parseHttpRequest } from '../parseHttpRequest.ts';
-import type { THttpMethod } from '@typedefs/constants/http.js';
+import type { InternalHttpMethod } from '@typedefs/constants/http.js';
 
 describe('parseHttpRequest', () => {
   describe('Basic HTTP request parsing', () => {
@@ -55,7 +55,7 @@ describe('parseHttpRequest', () => {
 
   describe('HTTP methods', () => {
     it('should handle all standard HTTP methods', () => {
-      const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] as Array<THttpMethod>;
+      const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] as Array<InternalHttpMethod>;
 
       for (const method of methods) {
         const rawRequest = `${method} /test HTTP/1.1\r\nHost: example.com\r\n\r\n`;

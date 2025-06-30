@@ -1,5 +1,5 @@
 import { httpMethod } from '@constants/http.ts';
-import type { THttpMethod } from '@typedefs/constants/http.ts';
+import type { InternalHttpMethod } from '@typedefs/constants/http.ts';
 import { handleCustomConfiguration } from '@core/setup/utils/handleCustomConfiguration.ts';
 import type { InternalSetupImpl, InternalSetupMethod } from '@typedefs/internal/InternalSetupImpl.ts';
 import { HookRegistryImpl } from '@core/execution/HookRegistryImpl.ts';
@@ -14,58 +14,81 @@ export class SetupImpl implements InternalSetupImpl {
   readonly _routeRegistry = new RouteRegistryImpl();
   readonly _hooks = new HookRegistryImpl();
 
-  constructor(customConfiguration?: ServerConfiguration) {
+  constructor(customConfiguration?: Partial<ServerConfiguration>) {
     this._configuration = handleCustomConfiguration(customConfiguration);
   }
 
   //   ===== Route Registration =====
   get(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
-    this._routeRegistry._register({ method: httpMethod.get, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
+    const routeOptions = options ?? { beforeHooks: [], afterHooks: [] };
+    // Register GET route
+    this._routeRegistry._register({ method: httpMethod.get, handler, path, options: routeOptions, params: {} });
+    // Automatically register corresponding HEAD route
+    this._routeRegistry._register({ method: httpMethod.head, handler, path, options: routeOptions, params: {} });
+  }
+
+  head(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
+    this._routeRegistry._register({ method: httpMethod.head, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
   post(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
-    this._routeRegistry._register({ method: httpMethod.post, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
+    this._routeRegistry._register({ method: httpMethod.post, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
   put(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
-    this._routeRegistry._register({ method: httpMethod.put, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
+    this._routeRegistry._register({ method: httpMethod.put, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
   patch(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
-    this._routeRegistry._register({ method: httpMethod.patch, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
+    this._routeRegistry._register({ method: httpMethod.patch, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
   delete(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
-    this._routeRegistry._register({ method: httpMethod.delete, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
+    this._routeRegistry._register({ method: httpMethod.delete, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
   options(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
-    this._routeRegistry._register({ method: httpMethod.options, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] } });
+    this._routeRegistry._register({ method: httpMethod.options, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
   group(
     prefix: string,
-    callback: (group: Record<Lowercase<THttpMethod>, InternalSetupMethod>) => void,
+    callback: (group: Record<Lowercase<InternalHttpMethod>, InternalSetupMethod>) => void,
     options?: InternalRouteRegistryOptions, // These follow the same pattern as the individual route registration methods
   ): void {
     const createRouteHandler =
-      (method: THttpMethod) =>
+      (method: InternalHttpMethod) =>
       (path: string, handler: HandlerCallback, routeOptions?: InternalRouteRegistryOptions): void => {
         const fullPath = `${prefix}${path}`;
+        const mergedOptions = {
+          beforeHooks: [...(options?.beforeHooks ?? []), ...(routeOptions?.beforeHooks ?? [])],
+          afterHooks: [...(routeOptions?.afterHooks ?? []), ...(options?.afterHooks ?? [])],
+        };
+
         this._routeRegistry._register({
           method,
           handler,
           path: fullPath,
-          options: {
-            beforeHooks: [...(options?.beforeHooks ?? []), ...(routeOptions?.beforeHooks ?? [])],
-            afterHooks: [...(routeOptions?.afterHooks ?? []), ...(options?.afterHooks ?? [])],
-          },
+          options: mergedOptions,
+          params: {},
         });
+
+        // If this is a GET route, automatically register the corresponding HEAD route
+        if (method === httpMethod.get) {
+          this._routeRegistry._register({
+            method: httpMethod.head,
+            handler,
+            path: fullPath,
+            options: mergedOptions,
+            params: {},
+          });
+        }
       };
 
     // Create a group app that registers routes with prefix and group hooks
     const group = {
       get: createRouteHandler(httpMethod.get),
+      head: createRouteHandler(httpMethod.head),
       post: createRouteHandler(httpMethod.post),
       put: createRouteHandler(httpMethod.put),
       delete: createRouteHandler(httpMethod.delete),

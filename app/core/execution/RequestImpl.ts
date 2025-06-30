@@ -1,5 +1,5 @@
 import { parseBody } from './utils/parseBody.ts';
-import type { TContentType, THttpHeaders, THttpMethod } from '@typedefs/constants/http.js';
+import type { InternalContentType, InternalHttpHeaders, InternalHttpMethod } from '@typedefs/constants/http.js';
 import { parseHttpRequest } from '@core/execution/utils/parseHttpRequest.ts';
 import { parseQuery } from '@core/execution/utils/parseQuery.ts';
 import { parseIpAddress } from '@core/execution/utils/parseIpAddress.ts';
@@ -14,10 +14,10 @@ export class RequestImpl implements InternalRequestImpl {
   readonly _rawRequest: Buffer | string;
   readonly _setup: InternalSetupImpl;
 
-  method: THttpMethod;
+  method: InternalHttpMethod;
   path: string;
   protocol: string;
-  headers: Partial<Record<THttpHeaders, string>>;
+  headers: Partial<Record<InternalHttpHeaders, string>>;
   body: unknown;
   query: Record<string, string>;
   params: Record<string, string>;
@@ -59,7 +59,7 @@ export class RequestImpl implements InternalRequestImpl {
 
     // Extract content type and boundary for body parsing
     const contentTypeHeader = headers['content-type'];
-    const mainContentType = contentTypeHeader?.split(';')[0]?.trim().toLowerCase() as TContentType | undefined;
+    const mainContentType = contentTypeHeader?.split(';')[0]?.trim().toLowerCase() as InternalContentType | undefined;
     const boundary = extractBoundaryFromHeader(contentTypeHeader);
 
     return {

@@ -4,12 +4,29 @@ import { RequestImpl } from '../RequestImpl.ts';
 import { SetupImpl } from '@core/setup/SetupImpl.ts';
 import { httpStatus, httpStatusCode } from '@constants/http.ts';
 import type { Request } from '@typedefs/public/Request.ts';
-import type { THttpHeaders } from '@typedefs/constants/http.js';
+import type { InternalHttpHeaders, InternalHttpStatusCode } from '@typedefs/constants/http.js';
 
-// Test data builders
+// Reusable test data builders
 const createTestRequest = (requestString = 'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n'): Request => {
   return new RequestImpl(Buffer.from(requestString), new SetupImpl());
 };
+
+
+
+const createCompleteResponse = (request: Request, statusCode: InternalHttpStatusCode, headers: Record<string, string>, body: any) => {
+  const response = new ResponseImpl(request);
+  response.setStatusCode(statusCode);
+  response.addHeaders(headers);
+  response._setBody(body);
+  return response;
+};
+
+const createStandardHeaders = () => ({
+  'content-type': 'application/json',
+  'cache-control': 'no-cache',
+  authorization: 'Bearer token',
+  'user-agent': 'TestAgent/1.0',
+});
 
 describe('ResponseImpl', () => {
   let request: Request;
@@ -20,134 +37,160 @@ describe('ResponseImpl', () => {
     response = new ResponseImpl(request);
   });
 
-  describe('constructor initialization', () => {
-    it('should initialize with default values', () => {
-      expect(response._request).toBe(request);
-      expect(response._statusCode).toBe(httpStatusCode.ok);
-      expect(response._status).toBe(httpStatus.ok);
-      expect(response._headers).toEqual({});
-      expect(response._body).toBe('');
-    });
+  describe('Initialization', () => {
+    describe('Constructor', () => {
+      it('should initialize with default values', () => {
+        expect(response._request).toBe(request);
+        expect(response._statusCode).toBe(httpStatusCode.ok);
+        expect(response._status).toBe(httpStatus.ok);
+        expect(response._headers).toEqual({});
+        expect(response._body).toBe('');
+      });
 
-    it('should maintain reference to original request', () => {
-      const customRequest = createTestRequest('POST /api HTTP/1.1\r\nHost: localhost\r\n\r\n');
-      const customResponse = new ResponseImpl(customRequest);
+      it('should maintain reference to original request', () => {
+        const customRequest = createTestRequest('POST /api HTTP/1.1\r\nHost: localhost\r\n\r\n');
+        const customResponse = new ResponseImpl(customRequest);
 
-      expect(customResponse._request).toBe(customRequest);
-      expect(customResponse._request.method).toBe('POST');
-      expect(customResponse._request.path).toBe('/api');
+        expect(customResponse._request).toBe(customRequest);
+        expect(customResponse._request.method).toBe('POST');
+        expect(customResponse._request.path).toBe('/api');
+      });
     });
   });
 
-  describe('setStatusCode', () => {
-    const statusTestCases = [
-      { code: httpStatusCode.ok, expectedStatus: httpStatus.ok },
-      { code: httpStatusCode.created, expectedStatus: httpStatus.created },
-      { code: httpStatusCode.badRequest, expectedStatus: httpStatus.badRequest },
-      { code: httpStatusCode.notFound, expectedStatus: httpStatus.notFound },
-      { code: httpStatusCode.internalServerError, expectedStatus: httpStatus.internalServerError },
+  describe('Status Code Management', () => {
+    const statusCodeTestCases = [
+      { code: httpStatusCode.ok, expectedStatus: httpStatus.ok, description: 'OK (200)' },
+      { code: httpStatusCode.created, expectedStatus: httpStatus.created, description: 'Created (201)' },
+      { code: httpStatusCode.badRequest, expectedStatus: httpStatus.badRequest, description: 'Bad Request (400)' },
+      { code: httpStatusCode.notFound, expectedStatus: httpStatus.notFound, description: 'Not Found (404)' },
+      { code: httpStatusCode.internalServerError, expectedStatus: httpStatus.internalServerError, description: 'Internal Server Error (500)' },
     ];
 
-    statusTestCases.forEach(({ code, expectedStatus }) => {
-      it(`should set status code ${code} and corresponding status message`, () => {
+    describe('Setting Status Codes', () => {
+      it.each(statusCodeTestCases)('should set $description and corresponding status message', ({ code, expectedStatus }) => {
         response.setStatusCode(code);
 
         expect(response._statusCode).toBe(code);
         expect(response._status).toBe(expectedStatus);
       });
-    });
 
-    it('should update status when called multiple times', () => {
-      response.setStatusCode(httpStatusCode.created);
-      expect(response._statusCode).toBe(httpStatusCode.created);
+      it('should update status when called multiple times', () => {
+        response.setStatusCode(httpStatusCode.created);
+        expect(response._statusCode).toBe(httpStatusCode.created);
 
-      response.setStatusCode(httpStatusCode.badRequest);
-      expect(response._statusCode).toBe(httpStatusCode.badRequest);
-      expect(response._status).toBe(httpStatus.badRequest);
-    });
-  });
-
-  describe('addHeaders', () => {
-    it('should add single header', () => {
-      response.addHeaders({ 'content-type': 'application/json' });
-
-      expect(response._headers['content-type']).toBe('application/json');
-    });
-
-    it('should add multiple headers at once', () => {
-      const headers = {
-        'content-type': 'text/html',
-        'cache-control': 'no-cache',
-        authorization: 'Bearer token123',
-      };
-
-      response.addHeaders(headers);
-
-      expect(response._headers['content-type']).toBe('text/html');
-      expect(response._headers['cache-control']).toBe('no-cache');
-      expect(response._headers.authorization).toBe('Bearer token123');
-    });
-
-    it('should overwrite existing headers', () => {
-      response.addHeaders({ 'content-type': 'application/json' });
-      response.addHeaders({ 'content-type': 'text/plain' });
-
-      expect(response._headers['content-type']).toBe('text/plain');
-    });
-
-    it('should preserve existing headers when adding new ones', () => {
-      response.addHeaders({ 'content-type': 'application/json' });
-      response.addHeaders({ 'cache-control': 'no-cache' });
-
-      expect(response._headers['content-type']).toBe('application/json');
-      expect(response._headers['cache-control']).toBe('no-cache');
+        response.setStatusCode(httpStatusCode.badRequest);
+        expect(response._statusCode).toBe(httpStatusCode.badRequest);
+        expect(response._status).toBe(httpStatus.badRequest);
+      });
     });
   });
 
-  describe('removeHeaders', () => {
-    beforeEach(() => {
-      response.addHeaders({
-        'content-type': 'application/json',
-        'cache-control': 'no-cache',
-        authorization: 'Bearer token',
-        'user-agent': 'TestAgent/1.0',
+  describe('Header Management', () => {
+    describe('Adding Headers', () => {
+      const headerTestCases = [
+        {
+          description: 'single header',
+          headers: { 'content-type': 'application/json' },
+          expectedResult: { 'content-type': 'application/json' },
+        },
+        {
+          description: 'multiple headers at once',
+          headers: {
+            'content-type': 'text/html',
+            'cache-control': 'no-cache',
+            authorization: 'Bearer token123',
+          },
+          expectedResult: {
+            'content-type': 'text/html',
+            'cache-control': 'no-cache',
+            authorization: 'Bearer token123',
+          },
+        },
+      ];
+
+      it.each(headerTestCases)('should add $description', ({ headers, expectedResult }) => {
+        response.addHeaders(headers);
+
+        Object.entries(expectedResult).forEach(([key, value]) => {
+          expect(response._headers[key as keyof typeof response._headers]).toBe(value);
+        });
+      });
+
+      it('should overwrite existing headers', () => {
+        response.addHeaders({ 'content-type': 'application/json' });
+        response.addHeaders({ 'content-type': 'text/plain' });
+
+        expect(response._headers['content-type']).toBe('text/plain');
+      });
+
+      it('should preserve existing headers when adding new ones', () => {
+        response.addHeaders({ 'content-type': 'application/json' });
+        response.addHeaders({ 'cache-control': 'no-cache' });
+
+        expect(response._headers['content-type']).toBe('application/json');
+        expect(response._headers['cache-control']).toBe('no-cache');
       });
     });
 
-    it('should remove single header', () => {
-      response.removeHeaders(['content-type']);
+    describe('Removing Headers', () => {
+      beforeEach(() => {
+        response.addHeaders(createStandardHeaders());
+      });
 
-      expect(response._headers['content-type']).toBeUndefined();
-      expect(response._headers['cache-control']).toBe('no-cache');
-    });
+      const headerRemovalTestCases = [
+        {
+          description: 'single header',
+          headersToRemove: ['content-type'],
+          expectedRemoved: ['content-type'],
+          expectedRemaining: ['cache-control'],
+        },
+        {
+          description: 'multiple headers',
+          headersToRemove: ['content-type', 'authorization'],
+          expectedRemoved: ['content-type', 'authorization'],
+          expectedRemaining: ['cache-control', 'user-agent'],
+        },
+      ];
 
-    it('should remove multiple headers', () => {
-      response.removeHeaders(['content-type', 'authorization']);
+      it.each(headerRemovalTestCases)('should remove $description', ({ headersToRemove, expectedRemoved, expectedRemaining }) => {
+        response.removeHeaders(headersToRemove);
 
-      expect(response._headers['content-type']).toBeUndefined();
-      expect(response._headers.authorization).toBeUndefined();
-      expect(response._headers['cache-control']).toBe('no-cache');
-      expect(response._headers['user-agent']).toBe('TestAgent/1.0');
-    });
+        expectedRemoved.forEach((header) => {
+          expect(response._headers[header as keyof typeof response._headers]).toBeUndefined();
+        });
 
-    it('should handle removal of non-existent headers gracefully', () => {
-      response.removeHeaders(['non-existent-header' as THttpHeaders]);
+        expectedRemaining.forEach((header) => {
+          expect(response._headers[header as keyof typeof response._headers]).toBeDefined();
+        });
+      });
 
-      // Should not throw and existing headers should remain
-      expect(response._headers['content-type']).toBe('application/json');
-    });
+      const edgeCaseTests = [
+        {
+          description: 'non-existent headers gracefully',
+          headersToRemove: ['non-existent-header' as InternalHttpHeaders],
+          shouldPreserveExisting: true,
+        },
+        {
+          description: 'empty array',
+          headersToRemove: [],
+          shouldPreserveExisting: true,
+        },
+      ];
 
-    it('should handle empty array', () => {
-      response.removeHeaders([]);
+      it.each(edgeCaseTests)('should handle removal of $description', ({ headersToRemove, shouldPreserveExisting }) => {
+        response.removeHeaders(headersToRemove);
 
-      // All headers should remain
-      expect(response._headers['content-type']).toBe('application/json');
-      expect(response._headers['cache-control']).toBe('no-cache');
+        if (shouldPreserveExisting) {
+          expect(response._headers['content-type']).toBe('application/json');
+          expect(response._headers['cache-control']).toBe('no-cache');
+        }
+      });
     });
   });
 
-  describe('_setBody', () => {
-    describe('with automatic content-type detection', () => {
+  describe('Body Handling', () => {
+    describe('Content Type Auto-Detection', () => {
       const bodyTestCases = [
         {
           name: 'JSON object',
@@ -171,160 +214,205 @@ describe('ResponseImpl', () => {
         },
       ];
 
-      bodyTestCases.forEach(({ name, body, expectedContentType }) => {
-        it(`should auto-detect content-type for ${name}`, () => {
-          response._setBody(body);
+      it.each(bodyTestCases)('should auto-detect content-type for $name', ({ body, expectedContentType }) => {
+        response._setBody(body);
 
-          expect(response._body).toBe(body);
-          expect(response._headers['content-type']).toBe(expectedContentType);
+        expect(response._body).toBe(body);
+        expect(response._headers['Content-Type']).toBe(expectedContentType);
+      });
+    });
+
+    describe('Body Content Management', () => {
+      it('should not override existing content-type header', () => {
+        response.addHeaders({ 'content-type': 'application/xml' });
+        response._setBody({ data: 'test' });
+
+        expect(response._headers['content-type']).toBe('application/xml');
+        expect(response._body).toEqual({ data: 'test' });
+      });
+
+      const specialValueTests = [
+        { value: null, description: 'null' },
+        { value: undefined, description: 'undefined' },
+      ];
+
+      it.each(specialValueTests)('should handle $description body', ({ value }) => {
+        response._setBody(value);
+        expect(response._body).toBe(value);
+      });
+
+      it('should update body when called multiple times', () => {
+        response._setBody('first body');
+        expect(response._body).toBe('first body');
+
+        response._setBody({ second: 'body' });
+        expect(response._body).toEqual({ second: 'body' });
+      });
+    });
+  });
+
+  describe('Response Formatting', () => {
+    describe('HTTP String Generation', () => {
+      const formatTestCases = [
+        {
+          description: 'basic response correctly',
+          statusCode: httpStatusCode.ok,
+          headers: { 'content-type': 'application/json' },
+          body: { message: 'success' },
+          expectedContains: ['HTTP/1.1 200 OK', 'content-type: application/json', '{"message":"success"}'],
+        },
+        {
+          description: 'response with multiple headers',
+          statusCode: httpStatusCode.created,
+          headers: {
+            'content-type': 'application/json',
+            'cache-control': 'no-cache',
+            location: '/api/resource/123',
+          },
+          body: { id: 123, created: true },
+          expectedContains: [
+            'HTTP/1.1 201 Created',
+            'content-type: application/json',
+            'cache-control: no-cache',
+            'location: /api/resource/123',
+            '{"id":123,"created":true}',
+          ],
+        },
+        {
+          description: 'error responses correctly',
+          statusCode: httpStatusCode.internalServerError,
+          headers: { 'content-type': 'application/json' },
+          body: { success: false, error: 'Something went wrong' },
+          expectedContains: ['HTTP/1.1 500 Internal Server Error', 'content-type: application/json', '"success":false', '"error":"Something went wrong"'],
+        },
+      ];
+
+      it.each(formatTestCases)('should format $description', ({ statusCode, headers, body, expectedContains }) => {
+        response.setStatusCode(statusCode);
+        response.addHeaders(headers);
+        response._setBody(body);
+
+        response._parseResponseIntoString();
+
+        expectedContains.forEach((expectedContent) => {
+          expect(response._stringBody).toContain(expectedContent);
         });
       });
-    });
 
-    it('should not override existing content-type header', () => {
-      response.addHeaders({ 'content-type': 'application/xml' });
-      response._setBody({ data: 'test' });
+      it('should handle response with no headers', () => {
+        response.setStatusCode(httpStatusCode.noContent);
+        response._setBody('');
 
-      expect(response._headers['content-type']).toBe('application/xml');
-      expect(response._body).toEqual({ data: 'test' });
-    });
+        response._parseResponseIntoString();
 
-    it('should handle null and undefined body', () => {
-      response._setBody(null);
-      expect(response._body).toBeNull();
+        expect(response._stringBody).toContain('HTTP/1.1 204 No Content');
+        expect(response._stringBody).toContain('\n\n'); // Empty headers section
+      });
 
-      response._setBody(undefined);
-      expect(response._body).toBeUndefined();
-    });
+      it('should handle different protocols', () => {
+        const httpRequest = createTestRequest('GET / HTTP/2\r\nHost: localhost\r\n\r\n');
+        const httpResponse = new ResponseImpl(httpRequest);
 
-    it('should update body when called multiple times', () => {
-      response._setBody('first body');
-      expect(response._body).toBe('first body');
+        httpResponse.setStatusCode(httpStatusCode.ok);
+        httpResponse._setBody('test');
 
-      response._setBody({ second: 'body' });
-      expect(response._body).toEqual({ second: 'body' });
+        httpResponse._parseResponseIntoString();
+        expect(httpResponse._stringBody).toContain('HTTP/2 200 OK');
+      });
     });
   });
 
-  describe('_parseResponseIntoString', () => {
-    it('should format basic response correctly', () => {
-      response.setStatusCode(httpStatusCode.ok);
-      response.addHeaders({ 'content-type': 'application/json' });
-      response._setBody({ message: 'success' });
+  describe('Integration Scenarios', () => {
+    describe('Complete Workflow', () => {
+      it('should handle complete response building workflow', () => {
+        const testData = {
+          statusCode: httpStatusCode.created,
+          headers: {
+            'content-type': 'application/json',
+            location: '/api/users/123',
+            'cache-control': 'no-cache',
+          },
+          body: {
+            id: 123,
+            name: 'John Doe',
+            email: 'john@example.com',
+            created: true,
+          },
+        };
 
-      const responseString = response._parseResponseIntoString();
+        // Build response using builder function
+        const completeResponse = createCompleteResponse(request, testData.statusCode, testData.headers, testData.body);
 
-      expect(responseString).toContain('HTTP/1.1 200 OK');
-      expect(responseString).toContain('content-type: application/json');
-      expect(responseString).toContain('{"message":"success"}');
-    });
+        // Verify all components are correctly set
+        expect(completeResponse._statusCode).toBe(201);
+        expect(completeResponse._status).toBe('Created');
+        expect(completeResponse._headers['content-type']).toBe('application/json');
+        expect(completeResponse._headers.location).toBe('/api/users/123');
+        expect(completeResponse._body).toEqual(testData.body);
 
-    it('should handle responses with multiple headers', () => {
-      response.setStatusCode(httpStatusCode.created);
-      response.addHeaders({
-        'content-type': 'application/json',
-        'cache-control': 'no-cache',
-        location: '/api/resource/123',
-      });
-      response._setBody({ id: 123, created: true });
-
-      const responseString = response._parseResponseIntoString();
-
-      expect(responseString).toContain('HTTP/1.1 201 Created');
-      expect(responseString).toContain('content-type: application/json');
-      expect(responseString).toContain('cache-control: no-cache');
-      expect(responseString).toContain('location: /api/resource/123');
-      expect(responseString).toContain('{"id":123,"created":true}');
-    });
-
-    it('should handle response with no headers', () => {
-      response.setStatusCode(httpStatusCode.noContent);
-      response._setBody('');
-
-      const responseString = response._parseResponseIntoString();
-
-      expect(responseString).toContain('HTTP/1.1 204 No Content');
-      expect(responseString).toContain('\n\n'); // Empty headers section
-    });
-
-    it('should handle different protocols', () => {
-      const httpRequest = createTestRequest('GET / HTTP/2\r\nHost: localhost\r\n\r\n');
-      const httpResponse = new ResponseImpl(httpRequest);
-
-      httpResponse.setStatusCode(httpStatusCode.ok);
-      httpResponse._setBody('test');
-
-      const responseString = httpResponse._parseResponseIntoString();
-      expect(responseString).toContain('HTTP/2 200 OK');
-    });
-
-    it('should format error responses correctly', () => {
-      response.setStatusCode(httpStatusCode.internalServerError);
-      response.addHeaders({ 'content-type': 'application/json' });
-      response._setBody({ success: false, error: 'Something went wrong' });
-
-      const responseString = response._parseResponseIntoString();
-
-      expect(responseString).toContain('HTTP/1.1 500 Internal Server Error');
-      expect(responseString).toContain('content-type: application/json');
-      expect(responseString).toContain('"success":false');
-      expect(responseString).toContain('"error":"Something went wrong"');
-    });
-  });
-
-  describe('integration scenarios', () => {
-    it('should handle complete response building workflow', () => {
-      // Simulate building a complete API response
-      response.setStatusCode(httpStatusCode.created);
-      response.addHeaders({
-        'content-type': 'application/json',
-        location: '/api/users/123',
-        'cache-control': 'no-cache',
-      });
-      response._setBody({
-        id: 123,
-        name: 'John Doe',
-        email: 'john@example.com',
-        created: true,
+        // Verify final string output
+        completeResponse._parseResponseIntoString();
+        expect(completeResponse._stringBody).toContain('201 Created');
+        expect(completeResponse._stringBody).toContain('"id":123');
+        expect(completeResponse._stringBody).toContain('"name":"John Doe"');
       });
 
-      // Verify all components are correctly set
-      expect(response._statusCode).toBe(201);
-      expect(response._status).toBe('Created');
-      expect(response._headers['content-type']).toBe('application/json');
-      expect(response._headers.location).toBe('/api/users/123');
-      expect(response._body).toEqual({
-        id: 123,
-        name: 'John Doe',
-        email: 'john@example.com',
-        created: true,
-      });
+      it('should handle modification after initial setup', () => {
+        // Initial setup
+        response.setStatusCode(httpStatusCode.ok);
+        response.addHeaders({ 'content-type': 'text/plain' });
+        response._setBody('Initial content');
 
-      // Verify final string output
-      const responseString = response._parseResponseIntoString();
-      expect(responseString).toContain('201 Created');
-      expect(responseString).toContain('"id":123');
-      expect(responseString).toContain('"name":"John Doe"');
+        // Modifications
+        response.setStatusCode(httpStatusCode.accepted);
+        response.addHeaders({ 'cache-control': 'max-age=3600' });
+        response.removeHeaders(['content-type']);
+        response._setBody({ modified: true, timestamp: Date.now() });
+
+        // Verify final state
+        expect(response._statusCode).toBe(202);
+        expect(response._status).toBe('Accepted');
+        expect(response._headers['Content-Type']).toBe('application/json'); // Auto-detected from new body
+        expect(response._headers['cache-control']).toBe('max-age=3600');
+        expect(response._body).toEqual({ modified: true, timestamp: expect.any(Number) });
+      });
     });
 
-    it('should handle modification after initial setup', () => {
-      // Initial setup
-      response.setStatusCode(httpStatusCode.ok);
-      response.addHeaders({ 'content-type': 'text/plain' });
-      response._setBody('Initial content');
+    describe('Real-World Scenarios', () => {
+      const apiResponseScenarios = [
+        {
+          scenario: 'successful API creation',
+          statusCode: httpStatusCode.created,
+          headers: { location: '/api/users/456' },
+          body: { id: 456, username: 'newuser', active: true },
+          expectedStatusText: '201 Created',
+        },
+        {
+          scenario: 'validation error response',
+          statusCode: httpStatusCode.badRequest,
+          headers: { 'content-type': 'application/json' },
+          body: { error: 'Validation failed', fields: ['email', 'password'] },
+          expectedStatusText: '400 Bad Request',
+        },
+        {
+          scenario: 'authentication required response',
+          statusCode: httpStatusCode.unauthorized,
+          headers: { 'www-authenticate': 'Bearer' },
+          body: { error: 'Authentication required' },
+          expectedStatusText: '401 Unauthorized',
+        },
+      ];
 
-      // Modifications
-      response.setStatusCode(httpStatusCode.accepted);
-      response.addHeaders({ 'cache-control': 'max-age=3600' });
-      response.removeHeaders(['content-type']);
-      response._setBody({ modified: true, timestamp: Date.now() });
+      it.each(apiResponseScenarios)('should handle $scenario', ({ statusCode, headers, body, expectedStatusText }) => {
+        const apiResponse = createCompleteResponse(request, statusCode, headers, body);
+        apiResponse._parseResponseIntoString();
 
-      // Verify final state
-      expect(response._statusCode).toBe(202);
-      expect(response._status).toBe('Accepted');
-      expect(response._headers['content-type']).toBe('application/json'); // Auto-detected from new body
-      expect(response._headers['cache-control']).toBe('max-age=3600');
-      expect(response._body).toEqual({ modified: true, timestamp: expect.any(Number) });
+        expect(apiResponse._stringBody).toContain(expectedStatusText);
+        expect(apiResponse._body).toEqual(body);
+        Object.entries(headers).forEach(([key, value]) => {
+          expect(apiResponse._headers[key as keyof typeof apiResponse._headers]).toBe(value);
+        });
+      });
     });
   });
 });

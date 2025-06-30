@@ -1,20 +1,25 @@
 import type { CreateEnum } from '@typedefs/internal/Generics.js';
 import type { logLevels } from '@constants/log.ts';
+import type { InternalHttpStatusCode } from '@typedefs/constants/http.js';
 
 export interface ServerConfiguration {
   /**
    * Port number of the server
    * @default 3000
    */
-  port?: number;
+  port: number;
 
   /**
    * Host name of the server
    * @default '0.0.0.0'
    */
-  host?: string;
+  host: string;
 
-  //   corsOptions: CorsOptions;
+  /**
+   * CORS (Cross-Origin Resource Sharing) configuration
+   * @default { enabled: true, origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], allowedHeaders: ['*'], credentials: false }
+   */
+  cors: CorsConfiguration;
 
   /**
    * Logging level for YinzerFlow server
@@ -23,14 +28,14 @@ export interface ServerConfiguration {
    * - 'network': Network logging + application logging (level 2)
    * @default 'off'
    */
-  logLevel?: CreateEnum<typeof logLevels>;
+  logLevel: CreateEnum<typeof logLevels>;
 
   /**
    * Number of proxy hops to the client
    * @default 0
    * TODO: Future feature
    */
-  proxyHops?: number;
+  proxyHops: number;
 
   /**
    * Connection options
@@ -42,7 +47,7 @@ export interface ServerConfiguration {
    *  keepAliveMaxDelay: 10000,
    * TODO: Future feature
    */
-  connectionOptions?: ConnectionOptions;
+  connectionOptions: ConnectionOptions;
 
   /**
    * Compression level
@@ -55,6 +60,90 @@ export interface ServerConfiguration {
    * TODO: Future feature
    */
   //   cache: string;
+}
+
+/**
+ * CORS Configuration Options
+ * Provides fine-grained control over Cross-Origin Resource Sharing
+ */
+export type CorsConfiguration = CorsDisabledConfiguration | CorsEnabledConfiguration;
+
+/**
+ * CORS Disabled Configuration
+ */
+export interface CorsDisabledConfiguration {
+  /**
+   * Disable CORS handling
+   */
+  enabled: false;
+}
+
+/**
+ * CORS Enabled Configuration
+ * When CORS is enabled, origin is required
+ */
+export interface CorsEnabledConfiguration {
+  /**
+   * Enable CORS handling
+   */
+  enabled: true;
+
+  /**
+   * Allowed origins for CORS requests (REQUIRED when enabled)
+   * - string: Single origin (e.g., 'https://example.com')
+   * - string[]: Multiple specific origins
+   * - '*': Allow all origins (not recommended for production with credentials)
+   * - function: Dynamic origin validation
+   */
+  origin: Array<string> | RegExp | string | ((origin: string | undefined, request: any) => boolean);
+
+  /**
+   * HTTP methods allowed for CORS requests
+   * @default ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+   */
+  methods: Array<string>;
+
+  /**
+   * Headers allowed in CORS requests
+   * - string[]: Specific headers
+   * - '*': Allow all headers
+   * @default ['*']
+   */
+  allowedHeaders: Array<string> | string | '*';
+
+  /**
+   * Headers exposed to the client in CORS responses
+   * @default []
+   */
+  exposedHeaders: Array<string>;
+
+  /**
+   * Allow credentials (cookies, authorization headers) in CORS requests
+   * Note: When true, origin cannot be '*'
+   * @default false
+   */
+  credentials: boolean;
+
+  /**
+   * Maximum age (in seconds) for preflight cache
+   * Tells browser how long to cache preflight response (client-side only)
+   * @default 86400 (24 hours)
+   */
+  maxAge: number;
+
+  /**
+   * Continue to route handler after preflight
+   * - false: Handle preflight completely in CORS system (recommended)
+   * - true: Pass preflight to route handlers (requires manual OPTIONS routes)
+   * @default false
+   */
+  preflightContinue: boolean;
+
+  /**
+   * Status code for successful OPTIONS requests
+   * @default 204
+   */
+  optionsSuccessStatus: InternalHttpStatusCode;
 }
 
 export interface ConnectionOptions {

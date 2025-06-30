@@ -1,13 +1,8 @@
 import { compileRoutePattern } from '@core/setup/utils/compileRoutePatter.ts';
 import { normalizePath, normalizeRouteStructure } from '@core/setup/utils/normalizeStringPatterns.ts';
 import { validateParameterNames } from '@core/setup/utils/validateParameterNames.ts';
-import type { THttpMethod } from '@typedefs/constants/http.ts';
-import type {
-  InternalPreCompiledRoute,
-  InternalRouteMatch,
-  InternalRouteRegistry,
-  InternalRouteRegistryImpl,
-} from '@typedefs/internal/InternalRouteRegistryImpl.js';
+import type { InternalHttpMethod } from '@typedefs/constants/http.ts';
+import type { InternalPreCompiledRoute, InternalRouteRegistry, InternalRouteRegistryImpl } from '@typedefs/internal/InternalRouteRegistryImpl.js';
 
 /**
  * RouteRegistry: Efficient route storage and matching
@@ -31,7 +26,7 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
    * Fast O(1) lookup for routes without parameters
    * Example: GET /users, POST /login, etc.
    */
-  readonly _exactRoutes = new Map<THttpMethod, Map<string, InternalRouteRegistry>>();
+  readonly _exactRoutes = new Map<InternalHttpMethod, Map<string, InternalRouteRegistry>>();
 
   /**
    * Array of pre-compiled parameterized routes for O(n) matching
@@ -42,7 +37,7 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
    * 2. Most apps have relatively few parameterized routes
    * 3. Pre-compiled regexes make matching fast
    */
-  readonly _parameterizedRoutes = new Map<THttpMethod, Array<InternalPreCompiledRoute>>();
+  readonly _parameterizedRoutes = new Map<InternalHttpMethod, Array<InternalPreCompiledRoute>>();
 
   /**
    * Register a new route
@@ -65,7 +60,7 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
       throw new Error(`Route ${normalizedPath} already exists for method ${method}`);
     }
 
-    const route = { method, path: normalizedPath, handler, options };
+    const route = { method, path: normalizedPath, handler, options, params: {} };
 
     if (isParameterized) {
       // Store in parameterized routes with pre-compiled regex
@@ -83,16 +78,13 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
    * 1. Try exact match first (O(1) - fastest case)
    * 2. Fall back to parameterized routes (O(n) with pre-compiled regex)
    */
-  _findRoute(method: THttpMethod, path: string): InternalRouteMatch | undefined {
+  _findRoute(method: InternalHttpMethod, path: string): InternalRouteRegistry | undefined {
     const normalizedPath = normalizePath(path);
 
     // FAST PATH: Try exact match first (most common case)
     const exactRoute = this._exactRoutes.get(method)?.get(normalizedPath);
     if (exactRoute) {
-      return {
-        route: exactRoute,
-        params: {}, // No parameters to extract
-      };
+      return exactRoute;
     }
 
     // PARAMETERIZED PATH: Check routes with parameters
@@ -103,7 +95,7 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
    * Check if a route pattern already exists (for conflict detection)
    * This is different from findRoute which matches request paths to patterns
    */
-  private _hasExactRoutePattern(method: THttpMethod, pattern: string): boolean {
+  private _hasExactRoutePattern(method: InternalHttpMethod, pattern: string): boolean {
     // Check exact routes
     if (this._exactRoutes.get(method)?.has(pattern)) {
       return true;
@@ -132,7 +124,7 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
   /**
    * Store an exact route (no parameters) for O(1) lookup
    */
-  private _storeExactRoute(method: THttpMethod, path: string, route: InternalRouteRegistry): void {
+  private _storeExactRoute(method: InternalHttpMethod, path: string, route: InternalRouteRegistry): void {
     if (!this._exactRoutes.has(method)) {
       this._exactRoutes.set(method, new Map());
     }
@@ -143,7 +135,7 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
   /**
    * Store a parameterized route with pre-compiled regex pattern
    */
-  private _storeParameterizedRoute(method: THttpMethod, route: InternalRouteRegistry): void {
+  private _storeParameterizedRoute(method: InternalHttpMethod, route: InternalRouteRegistry): void {
     if (!this._parameterizedRoutes.has(method)) {
       this._parameterizedRoutes.set(method, []);
     }
@@ -167,7 +159,7 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
    * This is slower than the exact route match (O(n)) because it has to iterate through all the parameterized routes
    * and should only be used if the route is parameterized, otherwise it will be slower than the exact route match.
    */
-  private _findParameterizedRoute(method: THttpMethod, path: string): InternalRouteMatch | undefined {
+  private _findParameterizedRoute(method: InternalHttpMethod, path: string): InternalRouteRegistry | undefined {
     const paramRoutes = this._parameterizedRoutes.get(method);
     if (!paramRoutes) return undefined;
 
@@ -188,10 +180,7 @@ export class RouteRegistryImpl implements InternalRouteRegistryImpl {
           }
         }
 
-        return {
-          route: compiledRoute,
-          params,
-        };
+        return { ...compiledRoute, params };
       }
     }
 

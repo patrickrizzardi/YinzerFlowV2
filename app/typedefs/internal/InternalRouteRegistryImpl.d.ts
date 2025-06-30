@@ -1,11 +1,11 @@
-import type { THttpMethod } from '@typedefs/constants/http.ts';
+import type { InternalHttpMethod } from '@typedefs/constants/http.ts';
 import type { HandlerCallback } from '@typedefs/public/Context.js';
 
 export interface InternalRouteRegistryImpl {
-  readonly _exactRoutes: Map<THttpMethod, Map<string, InternalRouteRegistry>>;
-  readonly _parameterizedRoutes: Map<THttpMethod, Array<InternalPreCompiledRoute>>;
+  readonly _exactRoutes: Map<InternalHttpMethod, Map<string, InternalRouteRegistry>>;
+  readonly _parameterizedRoutes: Map<InternalHttpMethod, Array<InternalPreCompiledRoute>>;
   _register: (route: InternalRouteRegistry) => void;
-  _findRoute: (method: THttpMethod, path: string) => InternalRouteMatch | undefined;
+  _findRoute: (method: InternalHttpMethod, path: string) => InternalRouteRegistry | undefined;
 }
 
 export interface InternalRouteRegistryOptions {
@@ -16,9 +16,10 @@ export interface InternalRouteRegistryOptions {
 export interface InternalRouteRegistry {
   prefix?: string;
   path: string;
-  method: THttpMethod;
+  method: InternalHttpMethod;
   handler: HandlerCallback;
   options: InternalRouteRegistryOptions;
+  params: Record<string, string>;
 }
 
 /**
@@ -37,9 +38,4 @@ export interface InternalPreCompiledRoute extends InternalRouteRegistry {
   pattern: RegExp;
   paramNames: Array<string>;
   isParameterized: boolean;
-}
-
-export interface InternalRouteMatch {
-  route: RouteRegistryResolved;
-  params: Record<string, string>;
 }

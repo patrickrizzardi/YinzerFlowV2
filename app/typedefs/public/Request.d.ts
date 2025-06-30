@@ -1,11 +1,11 @@
-import type { THttpHeaders, THttpMethod } from '@typedefs/constants/http.js';
+import type { InternalHttpHeaders, InternalHttpMethod } from '@typedefs/constants/http.js';
 import type { InternalHandlerCallbackGenerics } from '@typedefs/internal/Generics.d.ts';
 
 export interface Request<T = InternalHandlerCallbackGenerics> {
   protocol: string;
-  method: THttpMethod;
+  method: InternalHttpMethod;
   path: string;
-  headers: Partial<Record<THttpHeaders, string>>;
+  headers: Partial<Record<InternalHttpHeaders, string>>;
   body: T['body'];
   query: T['query'];
   params: T['params'];

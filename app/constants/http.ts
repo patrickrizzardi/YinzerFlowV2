@@ -58,10 +58,10 @@ export const httpStatusCode = {
 export const httpMethod = {
   delete: 'DELETE',
   get: 'GET',
+  head: 'HEAD',
   post: 'POST',
   put: 'PUT',
   patch: 'PATCH',
-  // head: 'HEAD',
   options: 'OPTIONS',
 } as const;
 
@@ -204,4 +204,10 @@ export const httpHeaders = {
   // Data & Clearing
   clearSiteData: 'Clear-Site-Data', // Clear browser data
   noVarySearch: 'No-Vary-Search', // Search param cache control
+} as const;
+
+export const httpEncoding = {
+  base64: 'base64',
+  binary: 'binary',
+  utf8: 'utf8',
 } as const;

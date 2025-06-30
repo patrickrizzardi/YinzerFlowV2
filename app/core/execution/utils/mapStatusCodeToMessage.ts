@@ -1,5 +1,5 @@
 import { httpStatus, httpStatusCode } from '@constants/http.ts';
-import type { THttpStatus, THttpStatusCode } from '@typedefs/constants/http.js';
+import type { InternalHttpStatus, InternalHttpStatusCode } from '@typedefs/constants/http.js';
 
 /**
  * Map of status codes to their corresponding status messages
@@ -28,14 +28,14 @@ for (const [key, code] of Object.entries(httpStatusCode)) {
  * mapStatusCodeToMessage(500) // returns "Internal Server Error"
  * ```
  */
-export const mapStatusCodeToMessage = (statusCode: THttpStatusCode): THttpStatus => {
+export const mapStatusCodeToMessage = (statusCode: InternalHttpStatusCode): InternalHttpStatus => {
   const message = statusCodeMap.get(statusCode);
 
   if (!message) {
     throw new Error(`Unknown status code: ${statusCode}`);
   }
 
-  return message as THttpStatus;
+  return message as InternalHttpStatus;
 };
 
 /**
@@ -44,4 +44,4 @@ export const mapStatusCodeToMessage = (statusCode: THttpStatusCode): THttpStatus
  * @param statusCode - The status code to validate
  * @returns true if the status code is supported
  */
-export const isValidStatusCode = (statusCode: number): statusCode is THttpStatusCode => statusCodeMap.has(statusCode);
+export const isValidStatusCode = (statusCode: number): statusCode is InternalHttpStatusCode => statusCodeMap.has(statusCode);

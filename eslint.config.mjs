@@ -69,7 +69,7 @@ const eslintRules = {
   ],
   'max-nested-callbacks': ['error', 3],
   'max-params': ['error', 3],
-  'max-statements': ['error', 20],
+  'max-statements': ['error', 30],
   'new-cap': ['error', { capIsNewExceptions: ['Attribute', 'Table', 'Default', 'HasOne', 'HasMany', 'BelongsTo', 'ENUM'] }],
   'no-alert': 'error',
   'no-bitwise': 'error',

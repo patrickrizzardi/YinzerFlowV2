@@ -1,4 +1,4 @@
-import type { THttpHeaders } from '@typedefs/constants/http.js';
+import type { InternalHttpHeaders } from '@typedefs/constants/http.js';
 
 /**
  * Parse the headers from the raw headers string
@@ -9,7 +9,7 @@ import type { THttpHeaders } from '@typedefs/constants/http.js';
  * // Returns { host: 'example.com', 'content-type': 'application/json' }
  * ```
  */
-export const parseHeaders = (rawHeaders: string): Partial<Record<THttpHeaders, string>> => {
+export const parseHeaders = (rawHeaders: string): Partial<Record<InternalHttpHeaders, string>> => {
   const headers: Record<string, string> = {};
   if (!rawHeaders) return headers;
 
@@ -27,7 +27,7 @@ export const parseHeaders = (rawHeaders: string): Partial<Record<THttpHeaders, s
     const value = line.slice(colonIndex + 1).trim();
 
     if (key) {
-      // Ensure the key is lowercase for consistency with the THttpHeaders type
+      // Ensure the key is lowercase for consistency with the InternalHttpHeaders type
       headers[key.toLowerCase()] = value;
     }
   }

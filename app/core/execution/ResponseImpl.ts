@@ -2,24 +2,26 @@ import { formatBodyIntoString } from '@core/execution/utils/formatBodyIntoString
 import { determineEncoding } from '@core/execution/utils/determineEncoding.ts';
 import { inferContentType } from '@core/execution/utils/inferContentType.ts';
 import { mapStatusCodeToMessage } from '@core/execution/utils/mapStatusCodeToMessage.ts';
-import { httpStatus, httpStatusCode } from '@constants/http.ts';
-import type { THttpHeaders, THttpStatus, THttpStatusCode } from '@typedefs/constants/http.js';
+import { httpEncoding, httpStatus, httpStatusCode } from '@constants/http.ts';
+import type { InternalHttpEncoding, InternalHttpHeaders, InternalHttpStatus, InternalHttpStatusCode } from '@typedefs/constants/http.js';
 import type { Request } from '@typedefs/public/Request.ts';
 import type { InternalResponseImpl } from '@typedefs/internal/InternalResponseImpl.d.ts';
 
 export class ResponseImpl implements InternalResponseImpl {
   readonly _request: Request;
 
-  _statusCode: THttpStatusCode = httpStatusCode.ok;
-  _status: THttpStatus = httpStatus.ok;
-  _headers: Partial<Record<THttpHeaders, string>> = {};
+  _statusCode: InternalHttpStatusCode = httpStatusCode.ok;
+  _status: InternalHttpStatus = httpStatus.ok;
+  _headers: Partial<Record<InternalHttpHeaders, string>> = {};
   _body: unknown = '';
+  _stringBody = '';
+  _encoding: InternalHttpEncoding = httpEncoding.utf8;
 
   constructor(request: Request) {
     this._request = request;
   }
 
-  _parseResponseIntoString(): string {
+  _parseResponseIntoString(): void {
     // Example: HTTP/1.1 200 OK
     const statusLine = `${this._request.protocol} ${this._statusCode} ${this._status}`;
 
@@ -33,10 +35,11 @@ export class ResponseImpl implements InternalResponseImpl {
     const body = formatBodyIntoString(this._body, { encoding });
 
     // Example: HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html><body><h1>Hello, world!</h1></body></html>
-    return `${statusLine}\n${headerLines.join('\n')}\n\n${body}`;
+    this._encoding = encoding;
+    this._stringBody = `${statusLine}\n${headerLines.join('\n')}\n\n${body}`;
   }
 
-  private _setHeadersIfNotSet(headers: Partial<Record<THttpHeaders, string>>): void {
+  _setHeadersIfNotSet(headers: Partial<Record<InternalHttpHeaders, string>>): void {
     for (const [key, value] of Object.entries(headers)) {
       if (!(key in this._headers)) {
         this._headers[key] = value;
@@ -51,21 +54,21 @@ export class ResponseImpl implements InternalResponseImpl {
     if (!this._headers['content-type']) {
       const detectedContentType = inferContentType(body);
       this._setHeadersIfNotSet({
-        'content-type': detectedContentType,
+        'Content-Type': detectedContentType,
       });
     }
   }
 
-  setStatusCode(statusCode: THttpStatusCode): void {
+  setStatusCode(statusCode: InternalHttpStatusCode): void {
     this._statusCode = statusCode;
     this._status = mapStatusCodeToMessage(statusCode);
   }
 
-  addHeaders(headers: Partial<Record<THttpHeaders, string>>): void {
+  addHeaders(headers: Partial<Record<InternalHttpHeaders, string>>): void {
     this._headers = { ...this._headers, ...headers };
   }
 
-  removeHeaders(headerNames: Array<THttpHeaders>): void {
+  removeHeaders(headerNames: Array<InternalHttpHeaders>): void {
     for (const headerName of headerNames) {
       delete this._headers[headerName];
     }

@@ -40,7 +40,7 @@ let currentLogLevel: LogLevels = logLevels.info;
 const formatTimestamp = (): string => dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
 const formatNetworkTimestamp = (): string => dayjs().format('DD/MMM/YYYY:HH:mm:ss ZZ');
 
-const getRandomPhrase = (type: 'positive' | 'neutral' | 'negative'): string => {
+const getRandomPhrase = (type: 'negative' | 'neutral' | 'positive'): string => {
   const phrases = yinzerPhrases[type];
   return phrases[Math.floor(Math.random() * phrases.length)] ?? '';
 };

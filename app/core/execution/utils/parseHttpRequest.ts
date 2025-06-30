@@ -1,4 +1,4 @@
-import type { THttpMethod } from '@typedefs/constants/http.js';
+import type { InternalHttpMethod } from '@typedefs/constants/http.js';
 import { httpMethod } from '@constants/http.ts';
 import { divideString } from '@core/utils/string.ts';
 
@@ -11,7 +11,7 @@ import { divideString } from '@core/utils/string.ts';
  * // Returns { method: 'GET', path: '/path?key1=value1&key2=value2', protocol: 'HTTP/1.1', headersRaw: 'Host: example.com\r\n', rawBody: '' }
  * ```
  */
-export const parseHttpRequest = (request: string): { method: THttpMethod; path: string; protocol: string; headersRaw: string; rawBody: string } => {
+export const parseHttpRequest = (request: string): { method: InternalHttpMethod; path: string; protocol: string; headersRaw: string; rawBody: string } => {
   /**
    * The request is a string that contains the following information:
    * - The first line contains the request method, path, and protocol
@@ -21,7 +21,7 @@ export const parseHttpRequest = (request: string): { method: THttpMethod; path: 
   // Handle empty or malformed requests gracefully
   if (!request || !request.trim()) {
     return {
-      method: 'GET' as THttpMethod,
+      method: 'GET' as InternalHttpMethod,
       path: '/',
       protocol: 'HTTP/1.1',
       headersRaw: '',
@@ -34,9 +34,9 @@ export const parseHttpRequest = (request: string): { method: THttpMethod; path: 
   const [headersRaw, rawBody] = divideString(rest, '\r\n\r\n');
 
   // Validate method and provide fallback
-  if (!method || !Object.values(httpMethod).includes(method as THttpMethod)) {
+  if (!method || !Object.values(httpMethod).includes(method as InternalHttpMethod)) {
     return {
-      method: 'GET' as THttpMethod,
+      method: 'GET' as InternalHttpMethod,
       path: path ?? '/',
       protocol: protocol ?? 'HTTP/1.1',
       headersRaw,
@@ -45,7 +45,7 @@ export const parseHttpRequest = (request: string): { method: THttpMethod; path: 
   }
 
   return {
-    method: method as THttpMethod,
+    method: method as InternalHttpMethod,
     path: path ?? '/',
     protocol: protocol ?? 'HTTP/1.1',
     headersRaw,
