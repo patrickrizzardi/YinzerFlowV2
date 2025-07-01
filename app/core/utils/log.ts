@@ -45,7 +45,7 @@ const getRandomPhrase = (type: 'negative' | 'neutral' | 'positive'): string => {
 // MAIN LOGGING SYSTEM (Numeric Levels)
 // =============================================================================
 
-const info = (...args: unknown[]): void => {
+const info = (...args: Array<unknown>): void => {
   if (currentLogLevel < internalLogLevels.info) return;
 
   if (customLogger) {
@@ -57,7 +57,7 @@ const info = (...args: unknown[]): void => {
   }
 };
 
-const warn = (...args: unknown[]): void => {
+const warn = (...args: Array<unknown>): void => {
   if (currentLogLevel < internalLogLevels.warn) return;
 
   if (customLogger) {
@@ -69,7 +69,7 @@ const warn = (...args: unknown[]): void => {
   }
 };
 
-const error = (...args: unknown[]): void => {
+const error = (...args: Array<unknown>): void => {
   if (currentLogLevel < internalLogLevels.error) return;
 
   if (customLogger) {
@@ -154,7 +154,7 @@ const setCustomLogger = (logger: Logger): void => {
 /**
  * Simple logging that mimics console.log behavior but with YinzerFlow styling
  */
-const logWithStyle = (level: 'error' | 'info' | 'warn', ...args: unknown[]): void => {
+const logWithStyle = (level: 'error' | 'info' | 'warn', ...args: Array<unknown>): void => {
   const timestamp = formatTimestamp();
 
   // Determine emoji, color, and phrase type based on level

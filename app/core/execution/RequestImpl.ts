@@ -38,8 +38,8 @@ export class RequestImpl implements InternalRequestImpl {
     this.protocol = protocol;
     this.headers = headers;
     this.body = body;
-    this.query = query;
-    this.params = params;
+    this.query = query ?? {};
+    this.params = params ?? {};
     this.rawBody = rawBody;
 
     // Update IP address if parsing from headers provides something

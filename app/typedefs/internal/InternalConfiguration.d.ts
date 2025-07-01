@@ -1,6 +1,8 @@
+/* eslint-disable max-lines */
 import type { CreateEnum } from '@typedefs/internal/Generics.js';
 import type { logLevels } from '@constants/log.js';
 import type { InternalHttpStatusCode } from '@typedefs/constants/http.js';
+import type { Logger } from '@typedefs/public/Logger.js';
 
 /**
  * Internal CORS Configuration Options
@@ -362,7 +364,7 @@ export interface InternalServerConfiguration {
    * Must implement the Logger interface
    * @default undefined (uses built-in logger)
    */
-  logger?: import('@typedefs/public/Logger.js').Logger;
+  logger?: Logger;
 
   /**
    * Network request/response logging (nginx-style logs)
@@ -378,7 +380,7 @@ export interface InternalServerConfiguration {
    * Useful for unified monitoring (e.g., Winston with Datadog transport for both app and network logs)
    * @default undefined (uses built-in network logging)
    */
-  networkLogger?: import('@typedefs/public/Logger.js').Logger;
+  networkLogger?: Logger;
 
   /**
    * Cross-Origin Resource Sharing configuration

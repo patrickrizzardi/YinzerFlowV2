@@ -13,8 +13,8 @@ export type DeepPartial<T> = {
 };
 
 export interface InternalHandlerCallbackGenerics {
-  body: unknown;
-  response: unknown;
-  query: Record<string, string>;
-  params: Record<string, string>;
+  body?: unknown;
+  response?: unknown;
+  query?: Record<string, string>;
+  params?: Record<string, string>;
 }

@@ -130,8 +130,8 @@ const connection = (event: 'connect' | 'disconnect' | 'error', clientIp?: string
   const ip = clientIp ?? 'unknown';
   const eventDetails = details ? ` - ${details}` : '';
 
-  let message: string;
-  let level: 'info' | 'warn' | 'error' = 'info';
+  let message = '';
+  let level: 'error' | 'info' | 'warn' = 'info';
 
   if (event === 'connect') {
     message = `🤝 [NETWORK] New visitor from ${ip} - Welcome to the 'Burgh!`;
