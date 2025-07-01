@@ -1,7 +1,7 @@
 import type { InternalHttpHeaders, InternalHttpMethod } from '@typedefs/constants/http.js';
 import type { InternalHandlerCallbackGenerics } from '@typedefs/internal/Generics.d.ts';
 
-export interface Request<T = InternalHandlerCallbackGenerics> {
+export interface Request<T extends InternalHandlerCallbackGenerics = InternalHandlerCallbackGenerics> {
   protocol: string;
   method: InternalHttpMethod;
   path: string;

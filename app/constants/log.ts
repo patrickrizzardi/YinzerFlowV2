@@ -1,13 +1,17 @@
 /**
  * YinzerFlow Logging Levels
  *
- * Hierarchical logging system where higher levels include lower level functionality:
- * - 'off': Silent mode - only shows slow request warnings (> 500ms)
- * - 'verbose': Application logging with Pittsburgh personality for all requests
- * - 'network': Network logging (nginx-style) + performance logs with Pittsburgh personality
+ * String-based logging levels for intuitive configuration:
+ * - 'off': No logging except errors
+ * - 'error': Only errors  
+ * - 'warn': Warnings and errors (includes security warnings, slow requests)
+ * - 'info': Info, warnings, and errors (standard application logging)
+ *
+ * Network logging is controlled separately via boolean networkLogging config.
  */
 export const logLevels = {
   off: 'off',
-  verbose: 'verbose',
-  network: 'network',
+  error: 'error',
+  warn: 'warn',
+  info: 'info',
 } as const;

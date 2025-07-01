@@ -2,40 +2,93 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import dts from 'bun-plugin-dts';
 
+/**
+ * Production Build Script for YinzerFlow
+ * 
+ * This script:
+ * 1. Runs quality checks (linting, testing, unused packages)
+ * 2. Builds the main library with TypeScript definitions
+ * 3. Validates bundle size
+ * 4. Copies distribution files
+ */
 
+// Configuration
+const BUILD_CONFIG = {
+  entrypoints: ['./app/core/YinzerFlow.ts'],
+  outdir: './lib',
+  target: 'node' as const,
+  minify: true,
+  sourcemap: 'external' as const,
+  maxBundleSize: 100000, // 100KB
+} as const;
 
+// Helper function to run command with better error reporting
+const runCommand = (command: string, description: string): void => {
+  console.log(`📋 ${description}...`);
+  try {
+    execSync(command, { stdio: 'inherit' });
+    console.log(`✅ ${description} completed`);
+  } catch (error) {
+    console.error(`❌ ${description} failed`);
+    throw error;
+  }
+};
 
+// Helper function to copy files with error handling
+const copyFiles = (): void => {
+  console.log('📁 Copying distribution files...');
 
+  const filesToCopy = [
+    { src: 'docs', dest: 'lib/docs', type: 'directory' },
+    { src: 'example', dest: 'lib/example', type: 'directory' },
+    { src: 'LICENSE', dest: 'lib/LICENSE', type: 'file' },
+    { src: 'README.md', dest: 'lib/README.md', type: 'file' },
+    { src: 'package.json', dest: 'lib/package.json', type: 'file' },
+  ];
 
+  for (const { src, dest, type } of filesToCopy) {
+    try {
+      if (type === 'directory') {
+        if (!existsSync(dest)) execSync(`mkdir -p ${dest}`);
+        execSync(`cp -R ${src}/* ${dest}/`);
+      } else {
+        execSync(`cp ${src} ${dest}`);
+      }
+      console.log(`✅ Copied ${src} → ${dest}`);
+    } catch (_) {
+      console.warn(`⚠️  Warning: Could not copy ${src} to ${dest}`);
+    }
+  }
+};
 
+const qualityChecks = (): void => {
+  console.log('🔍 Running quality checks...');
+  runCommand('bun run find-unused-packages', 'Checking for unused packages');
+  runCommand('bun run lint', 'Running linter');
+  runCommand('bun run lint:format', 'Checking code formatting');
+  runCommand('bun run lint:spelling', 'Checking spelling');
+  runCommand('bun run test:production', 'Running production tests');
+  console.log('✅ All quality checks passed!\n');
+};
 
+const cleanOutputDirectory = (): void => {
+  console.log('🧹 Cleaning output directory...');
+  execSync('rm -rf lib');
 
-
-
-// Build the Main app
-console.log('Building Main app...');
-try {
-  execSync('bun run find-unused-packages', { stdio: 'inherit' }); // Check for unused packages
-  execSync('bun run lint', { stdio: 'inherit' });
-  execSync('bun run lint:format', { stdio: 'inherit' });
-  execSync('bun run lint:spelling', { stdio: 'inherit' });
-  execSync('bun run test:production', { stdio: 'inherit' });
-
-  execSync('rm -rf lib'); // Remove the lib directory
-
-  // Create the output directory if it doesn't exist
   if (!existsSync('lib')) {
     mkdirSync('lib');
-    console.log('Created output directory.');
+    console.log('✅ Created output directory\n');
   }
+};
 
-  // Build the Main app
+const buildMainLibrary = async (): Promise<void> => {
+  console.log('🔨 Building main library...');
   await Bun.build({
-    entrypoints: ['./app/core/YinzerFlow.ts'],
-    outdir: './lib',
-    target: 'node',
-    minify: true,
-    sourcemap: 'external',
+    entrypoints: [...BUILD_CONFIG.entrypoints],
+    outdir: BUILD_CONFIG.outdir,
+    target: BUILD_CONFIG.target,
+    minify: BUILD_CONFIG.minify,
+    sourcemap: BUILD_CONFIG.sourcemap,
     plugins: [
       dts({
         output: {
@@ -45,257 +98,58 @@ try {
       }),
     ],
   });
+  console.log('✅ Main library built successfully\n');
+};
 
-  // Verify the size of the lib/index.js file is below 100KB
+const validateBundleSize = (): number => {
+  console.log('📏 Validating bundle size...');
   const { size } = Bun.file('lib/YinzerFlow.js');
-  if (size > 100000) {
-    console.error(`File size of lib/YinzerFlow.js is ${size} bytes, which is greater than 100KB`);
+  const sizeKB = Math.round(size / 1024);
+  const maxSizeKB = Math.round(BUILD_CONFIG.maxBundleSize / 1024);
+
+  if (size > BUILD_CONFIG.maxBundleSize) {
+    console.error(`❌ Bundle size: ${sizeKB}KB exceeds limit of ${maxSizeKB}KB`);
     process.exit(1);
   }
+  console.log(`✅ Bundle size: ${sizeKB}KB (within ${maxSizeKB}KB limit)\n`);
+  return sizeKB;
+};
 
-  // Ensure
+// Main build function
+const buildProduction = async (): Promise<void> => {
+  const startTime = Date.now();
+  console.log('🚀 Starting YinzerFlow production build...\n');
 
-  // Copy docs
-  if (!existsSync(`${import.meta.dir}/lib/docs`)) execSync(`mkdir -p ${import.meta.dir}/lib/docs`);
-  execSync(`cp -R ${import.meta.dir}/docs/* ${import.meta.dir}/lib/docs/`);
+  try {
+    // Step 1: Quality checks
+    qualityChecks();
 
-  // Copy example
-  if (!existsSync(`${import.meta.dir}/lib/example`)) execSync(`mkdir -p ${import.meta.dir}/lib/example`);
-  execSync(`cp -R ${import.meta.dir}/example/* ${import.meta.dir}/lib/example/`);
+    // Step 2: Clean and prepare output directory
+    cleanOutputDirectory();
 
-  // Copy LICENSE
-  execSync(`cp ${import.meta.dir}/LICENSE ${import.meta.dir}/lib/LICENSE`);
+    // Step 3: Build the main library
+    await buildMainLibrary();
 
-  // Copy README.md
-  execSync(`cp ${import.meta.dir}/README.md ${import.meta.dir}/lib/README.md`);
+    // Step 4: Validate bundle size
+    const sizeKB = validateBundleSize();
 
-  // Copy package.json
-  execSync(`cp ${import.meta.dir}/package.json ${import.meta.dir}/lib/package.json`);
+    // Step 5: Copy distribution files
+    copyFiles();
 
-  console.log('Main app built successfully.');
-} catch (error: unknown) {
-  console.error('Error during build:');
-  if (error instanceof Error) {
-    console.error(error.message);
-    // console.error(error.stack);
-  } else {
-    console.error(String(error));
+    // Success summary
+    const duration = Date.now() - startTime;
+    console.log(`\n🎉 Production build completed successfully in ${duration}ms!`);
+    console.log(`📦 Output: ./lib/YinzerFlow.js (${sizeKB}KB)`);
+  } catch (error: unknown) {
+    console.error('\n❌ Production build failed:');
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error(String(error));
+    }
+    process.exit(1);
   }
-  process.exit(1);
-}
+};
 
-
-// // Build the Constants
-// console.log('Building Constants...');
-// try {
-//   await Bun.build({
-//     entrypoints: ['./app/@constants/index.ts'],
-//     outdir: './lib/constants',
-//     target: 'node',
-//     minify: true,
-//     sourcemap: 'external',
-//     plugins: [
-//       dts({
-//         output: {
-//           noBanner: true,
-//           exportReferencedTypes: false,
-//         },
-//       }),
-//     ],
-//   });
-//   console.log('Constants built successfully.');
-// } catch (error: unknown) {
-//   console.error('Error during build:');
-//   if (error instanceof Error) {
-//     console.error(error.message);
-//     console.error(error.stack);
-//   } else {
-//     console.error(String(error));
-//   }
-//   process.exit(1);
-// }
-
-// // Process the generated files to fix imports
-// console.log('Processing generated files...');
-// try {
-//   // Fix imports in the main index.js
-//   const indexJsFile = Bun.file(`${import.meta.dir}/lib/index.js`);
-//   if (await indexJsFile.exists()) {
-//     const writer = indexJsFile.writer();
-//     let content = await indexJsFile.text();
-
-//     // Fix import paths to use package path - handle different import formats
-//     content = content
-//       .replace(/from\s*['"]constants\/(?<file>[^'"]+)(?:\.ts)?['"]/g, () => `from "yinzerflow/@constants/index.js"`)
-//       .replace(
-//         /import\s*{(?<imports>[^}]+)}\s*from\s*['"]constants\/(?<file>[^'"]+)(?:\.ts)?['"]/g,
-//         (_match, imports) => `import {${imports}} from "yinzerflow/@constants/index.js"`,
-//       );
-
-//     writer.write(content);
-//     await writer.end();
-//   }
-
-//   console.log('Files processed successfully.');
-// } catch (error: unknown) {
-//   console.warn('Warning: Could not process generated files.');
-//   if (error instanceof Error) {
-//     console.warn(error.message);
-//   } else {
-//     console.warn(String(error));
-//   }
-// }
-
-// // Process the generated d.ts file to fix any issues
-// console.log('Processing TypeScript declaration file...');
-// try {
-//   const file = Bun.file(`${import.meta.dir}/lib/index.d.ts`);
-//   if (await file.exists()) {
-//     const writer = file.writer();
-//     let content = await file.text();
-
-//     // Fix class declarations
-//     content = content.replace(/declare class/g, 'export declare class');
-
-//     writer.write(content);
-//     await writer.end();
-//     console.log('TypeScript declaration file processed successfully.');
-//   } else {
-//     console.warn('Warning: TypeScript declaration file not found.');
-//   }
-// } catch (error: unknown) {
-//   console.warn('Warning: Could not process TypeScript declaration file.');
-//   if (error instanceof Error) {
-//     console.warn(error.message);
-//   } else {
-//     console.warn(String(error));
-//   }
-// }
-
-// // Copy package.json to the lib directory
-// console.log('Copying package.json to lib directory...');
-// try {
-//   const packageJson = Bun.file(`${import.meta.dir}/package.json`);
-//   if (await packageJson.exists()) {
-//     const content = await packageJson.text();
-
-//     // Create a new package.json in the lib directory
-//     const libPackageJson = Bun.file(`${import.meta.dir}/lib/package.json`);
-//     const writer = libPackageJson.writer();
-//     writer.write(content);
-//     await writer.end();
-
-//     console.log('package.json copied successfully.');
-//   } else {
-//     console.warn('Warning: package.json not found.');
-//   }
-// } catch (error: unknown) {
-//   console.warn('Warning: Could not copy package.json.');
-//   if (error instanceof Error) {
-//     console.warn(error.message);
-//   } else {
-//     console.warn(String(error));
-//   }
-// }
-
-// // Copy README.md to the lib directory
-// console.log('Copying README.md to lib directory...');
-// try {
-//   const readmeFile = Bun.file(`${import.meta.dir}/README.md`);
-//   if (await readmeFile.exists()) {
-//     const content = await readmeFile.text();
-
-//     const libReadmeFile = Bun.file(`${import.meta.dir}/lib/README.md`);
-//     const writer = libReadmeFile.writer();
-//     writer.write(content);
-//     await writer.end();
-
-//     console.log('README.md copied successfully.');
-//   } else {
-//     console.warn('Warning: README.md not found.');
-//   }
-// } catch (error: unknown) {
-//   console.warn('Warning: Could not copy README.md.');
-//   if (error instanceof Error) {
-//     console.warn(error.message);
-//   } else {
-//     console.warn(String(error));
-//   }
-// }
-
-// // Copy LICENSE to the lib directory
-// console.log('Copying LICENSE to lib directory...');
-// try {
-//   const licenseFile = Bun.file(`${import.meta.dir}/LICENSE`);
-//   if (await licenseFile.exists()) {
-//     const content = await licenseFile.text();
-
-//     const libLicenseFile = Bun.file(`${import.meta.dir}/lib/LICENSE`);
-//     const writer = libLicenseFile.writer();
-//     writer.write(content);
-//     await writer.end();
-
-//     console.log('LICENSE copied successfully.');
-//   } else {
-//     console.warn('Warning: LICENSE not found.');
-//   }
-// } catch (error: unknown) {
-//   console.warn('Warning: Could not copy LICENSE.');
-//   if (error instanceof Error) {
-//     console.warn(error.message);
-//   } else {
-//     console.warn(String(error));
-//   }
-// }
-
-// // Copy docs folder to the lib directory
-// console.log('Copying docs folder to lib directory...');
-// try {
-//   if (existsSync(`${import.meta.dir}/docs`)) {
-//     // Create docs directory in lib if it doesn't exist
-//     if (!existsSync(`${import.meta.dir}/lib/docs`)) {
-//       mkdirSync(`${import.meta.dir}/lib/docs`, { recursive: true });
-//     }
-
-//     // Use execSync to copy the entire docs directory
-//     execSync(`cp -R ${import.meta.dir}/docs/* ${import.meta.dir}/lib/docs/`);
-
-//     console.log('docs folder copied successfully.');
-//   } else {
-//     console.warn('Warning: docs folder not found.');
-//   }
-// } catch (error: unknown) {
-//   console.warn('Warning: Could not copy docs folder.');
-//   if (error instanceof Error) {
-//     console.warn(error.message);
-//   } else {
-//     console.warn(String(error));
-//   }
-// }
-
-// // Copy example folder to the lib directory
-// console.log('Copying example folder to lib directory...');
-// try {
-//   if (existsSync(`${import.meta.dir}/example`)) {
-//     // Create example directory in lib if it doesn't exist
-//     if (!existsSync(`${import.meta.dir}/lib/example`)) {
-//       mkdirSync(`${import.meta.dir}/lib/example`, { recursive: true });
-//     }
-
-//     // Use execSync to copy the entire example directory
-//     execSync(`cp -R ${import.meta.dir}/example/* ${import.meta.dir}/lib/example/`);
-
-//     console.log('example folder copied successfully.');
-//   } else {
-//     console.warn('Warning: example folder not found.');
-//   }
-// } catch (error: unknown) {
-//   console.warn('Warning: Could not copy example folder.');
-//   if (error instanceof Error) {
-//     console.warn(error.message);
-//   } else {
-//     console.warn(String(error));
-//   }
-// }
-
-console.log('Build completed.');
+// Run the build
+await buildProduction();

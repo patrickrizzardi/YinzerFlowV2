@@ -54,5 +54,5 @@
     "noUncheckedIndexedAccess": true,
     "strictBindCallApply": true
   },
-  "include": ["app/**/*", "example/**/*",  "build.ts"]
+  "include": ["app/**/*", "example/**/*", "build.ts", "build-watch.ts"]
 }

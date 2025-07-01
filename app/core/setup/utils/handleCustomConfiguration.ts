@@ -64,7 +64,8 @@ const DEFAULT_IP_SECURITY_CONFIG = {
 const DEFAULT_CONFIGURATION: InternalServerConfiguration = {
   port: 5000,
   host: '0.0.0.0',
-  logLevel: logLevels.off,
+  logLevel: logLevels.warn,
+  networkLogs: false,
   cors: {
     enabled: false, // Disabled by default
   },

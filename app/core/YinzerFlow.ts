@@ -5,7 +5,7 @@ import { RequestHandlerImpl } from '@core/execution/RequestHandlerImpl.ts';
 import { ContextImpl } from '@core/execution/ContextImpl.ts';
 import { SetupImpl } from '@core/setup/SetupImpl.ts';
 import { log } from '@core/utils/log.ts';
-import { logLevels } from '@constants/log.ts';
+import { colors, networkLog } from '@core/utils/networkLog.ts';
 import type { ServerConfiguration } from '@typedefs/public/Configuration.js';
 
 export class YinzerFlow extends SetupImpl {
@@ -16,13 +16,15 @@ export class YinzerFlow extends SetupImpl {
     super(configuration);
 
     // Initialize logging
-    if (this._configuration.logLevel === logLevels.verbose || this._configuration.logLevel === logLevels.network) {
-      log.setLogLevel(1); // info level
-      log.success('YinzerFlow initialized with logging enabled', { level: this._configuration.logLevel });
-    }
-    if (this._configuration.logLevel === logLevels.off) {
-      log.setLogLevel(2); // Only show warnings and errors
-    }
+    log.setLogLevel(this._configuration.logLevel);
+
+    // Configure network logging - simple boolean toggle
+    networkLog.setEnabled(this._configuration.networkLogs);
+
+    log.info(
+      'YinzerFlow initialized with logging enabled',
+      `${colors.green}level: ${this._configuration.logLevel}, networkLogs: ${this._configuration.networkLogs}${colors.reset}`,
+    );
   }
 
   /**
@@ -32,17 +34,13 @@ export class YinzerFlow extends SetupImpl {
     if (!this._server) return;
 
     this._server.on('error', (error: Error) => {
-      if (this._configuration.logLevel !== logLevels.off) {
-        log.network.serverError(this._configuration.port, this._configuration.host, error.message);
-      }
+      networkLog.serverError(this._configuration.port, this._configuration.host, error.message);
       reject(error);
     });
 
     this._server.on('listening', () => {
       this._isListening = true;
-      if (this._configuration.logLevel !== logLevels.off) {
-        log.network.serverStart(this._configuration.port, this._configuration.host);
-      }
+      networkLog.serverStart(this._configuration.port, this._configuration.host);
       resolve();
     });
 
@@ -67,9 +65,7 @@ export class YinzerFlow extends SetupImpl {
   }): Promise<void> {
     const startTime = Date.now();
 
-    if (this._configuration.logLevel === logLevels.verbose) {
-      log.info('Processing incoming request', { clientAddress, dataSize: data.length });
-    }
+    log.info('Processing incoming request', { clientAddress, dataSize: data.length });
 
     const context = new ContextImpl(data, this, clientAddress);
 
@@ -82,10 +78,8 @@ export class YinzerFlow extends SetupImpl {
     const processingTime = endTime - startTime;
 
     // Log request
-    if (this._configuration.logLevel === logLevels.network || this._configuration.logLevel === logLevels.verbose) {
-      log.network.request(context, startTime, endTime);
-    }
-    if (this._configuration.logLevel === logLevels.off && processingTime > 500) {
+    networkLog.request(context, startTime, endTime);
+    if (processingTime > 500) {
       log.warn('Slow request detected', {
         method: context.request.method,
         path: context.request.path,
@@ -102,32 +96,22 @@ export class YinzerFlow extends SetupImpl {
   private _handleConnection(socket: Socket, requestHandler: RequestHandlerImpl): void {
     const clientAddress = socket.remoteAddress ?? 'unknown';
 
-    if (this._configuration.logLevel !== logLevels.off) {
-      log.network.connection('connect', clientAddress);
-    }
+    networkLog.connection('connect', clientAddress);
 
     socket.on('data', (data) => {
       this._processRequest({ data, socket, requestHandler, clientAddress }).catch((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        if (this._configuration.logLevel !== logLevels.off) {
-          log.network.connection('error', clientAddress, `Unexpected error: ${errorMessage}`);
-        }
-        log.error('Unexpected error in request processing', error);
+        networkLog.connection('error', clientAddress, `Unexpected error: ${errorMessage}`);
         socket.destroy();
       });
     });
 
     socket.on('error', (error: Error) => {
-      if (this._configuration.logLevel !== logLevels.off) {
-        log.network.connection('error', clientAddress, error.message);
-      }
-      log.error('Socket error', error);
+      networkLog.connection('error', clientAddress, error.message);
     });
 
     socket.on('close', () => {
-      if (this._configuration.logLevel !== logLevels.off) {
-        log.network.connection('disconnect', clientAddress);
-      }
+      networkLog.connection('disconnect', clientAddress);
     });
   }
 
@@ -159,9 +143,7 @@ export class YinzerFlow extends SetupImpl {
 
       this._server.close(() => {
         this._isListening = false;
-        if (this._configuration.logLevel !== logLevels.off) {
-          log.network.serverStop(this._configuration.port, this._configuration.host);
-        }
+        networkLog.serverStop(this._configuration.port, this._configuration.host);
         resolve();
       });
     });

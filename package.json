@@ -30,7 +30,7 @@
     "test:production": "bun test --timeout=20 --rerun-each=1 --bail --coverage",
     "clean": "rm -rf lib && rm -rf storage && echo 'Done.'",
     "build": "bun clean; bun build.ts",
-    "build:watch": "bun build app/core/YinzerFlow --outdir ./lib --target=bun --sourcemap=external --watch",
+    "build:watch": "bun build-watch.ts",
     "lint": "eslint app --fix --quiet --color --cache",
     "lint:format": "prettier --check app",
     "lint:spelling": "cspell app --no-progress --unique",

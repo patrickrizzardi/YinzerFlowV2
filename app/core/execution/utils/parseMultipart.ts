@@ -1,5 +1,6 @@
 import type { InternalContentDisposition, InternalFileUpload, InternalMultipartFormData } from '@typedefs/internal/InternalRequestImpl.ts';
 import type { InternalFileUploadConfiguration } from '@typedefs/internal/InternalConfiguration.js';
+import { log } from '@core/utils/log.ts';
 
 /**
  * Split a multipart section into headers and content
@@ -110,6 +111,12 @@ const _validateFileUpload = (file: InternalFileUpload, config?: InternalFileUplo
 
   // SECURITY: Check file size
   if (file.size > config.maxFileSize) {
+    log.warn('[SECURITY] File upload too large', {
+      filename: file.filename,
+      size: file.size,
+      limit: config.maxFileSize,
+      sizeMB: Math.round(file.size / 1024 / 1024),
+    });
     throw new Error(`File too large: ${file.filename} is ${file.size} bytes, exceeds limit of ${config.maxFileSize} bytes`);
   }
 
@@ -124,6 +131,11 @@ const _validateFileUpload = (file: InternalFileUpload, config?: InternalFileUplo
 
     // Check blocked extensions
     if (config.blockedExtensions.includes(extension)) {
+      log.warn('[SECURITY] Blocked file type upload attempt', {
+        filename: file.filename,
+        extension,
+        blockedExtensions: config.blockedExtensions,
+      });
       throw new Error(`File type not allowed: ${extension} files are blocked for security reasons`);
     }
 
@@ -224,6 +236,10 @@ export const parseMultipartFormData = (body: string, boundary: string, config?: 
     if (contentDisposition.filename !== undefined) {
       // SECURITY: Check file count limit
       if (config && result.files.length >= config.maxFiles) {
+        log.warn('[SECURITY] Too many files in upload request', {
+          fileCount: result.files.length,
+          maxFiles: config.maxFiles,
+        });
         throw new Error(`Too many files: maximum of ${config.maxFiles} files allowed per request`);
       }
 
@@ -238,6 +254,11 @@ export const parseMultipartFormData = (body: string, boundary: string, config?: 
 
       // SECURITY: Check total file size
       if (config && totalFileSize > config.maxTotalSize) {
+        log.warn('[SECURITY] Total upload size too large', {
+          totalSize: totalFileSize,
+          limit: config.maxTotalSize,
+          totalSizeMB: Math.round(totalFileSize / 1024 / 1024),
+        });
         throw new Error(`Total file size too large: ${totalFileSize} bytes exceeds limit of ${config.maxTotalSize} bytes`);
       }
 

@@ -1,4 +1,5 @@
 import type { InternalJsonParserConfiguration } from '@typedefs/internal/InternalConfiguration.js';
+import { log } from '@core/utils/log.ts';
 
 /**
  * Dangerous prototype properties that can lead to prototype pollution
@@ -24,6 +25,11 @@ export const parseApplicationJson = (body: string, config: InternalJsonParserCon
   // SECURITY: Validate request body size to prevent DoS attacks
   const bodySize = Buffer.byteLength(body, 'utf8');
   if (bodySize > config.maxSize) {
+    log.warn('[SECURITY] JSON request body too large', {
+      size: bodySize,
+      limit: config.maxSize,
+      sizeMB: Math.round(bodySize / 1024 / 1024),
+    });
     throw new Error(`Request body too large: ${bodySize} bytes exceeds limit of ${config.maxSize} bytes`);
   }
 
@@ -85,6 +91,10 @@ const _validateObjectKeys = (keys: Array<string>, config: InternalJsonParserConf
   if (!config.allowPrototypeProperties) {
     for (const key of keys) {
       if (DANGEROUS_PROPERTIES.includes(key)) {
+        log.warn('[SECURITY] Prototype pollution attempt detected', {
+          property: key,
+          dangerousProperties: DANGEROUS_PROPERTIES,
+        });
         throw new Error(`Prototype pollution attempt detected: property '${key}' is not allowed`);
       }
     }
@@ -125,6 +135,10 @@ const _validateObjectProperties = (data: Record<string, unknown>, config: Intern
 const _validateJsonStructure = (data: unknown, config: InternalJsonParserConfiguration, depth: number): void => {
   // SECURITY: Check nesting depth to prevent stack overflow attacks
   if (depth > config.maxDepth) {
+    log.warn('[SECURITY] JSON nesting too deep - potential stack overflow attack', {
+      currentDepth: depth,
+      maxDepth: config.maxDepth,
+    });
     throw new Error(`JSON nesting too deep: current depth ${depth} exceeds maximum depth of ${config.maxDepth}`);
   }
 
