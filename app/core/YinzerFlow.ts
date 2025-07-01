@@ -35,7 +35,6 @@ export class YinzerFlow extends SetupImpl {
       if (this._configuration.logLevel !== logLevels.off) {
         log.network.serverError(this._configuration.port, this._configuration.host, error.message);
       }
-      console.error('An error occurred with yinzer flow. Please open an issue on github.', error);
       reject(error);
     });
 

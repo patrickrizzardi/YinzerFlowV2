@@ -44,16 +44,22 @@ export interface InternalCorsEnabledConfiguration {
   methods: Array<string>;
 
   /**
-   * Headers allowed in CORS requests
-   * - string[]: Specific headers
-   * - '*': Allow all headers
+   * Headers allowed in CORS requests   *
    * @default ['*']
+   *
+   * These are the headers that will be allowed in each request.
+   * These headers typically include things like 'Content-Type', 'Authorization', 'X-Requested-With', etc.
+   * Other common headers would include headers needed for third party services like stripe or AWS via webhooks.
    */
   allowedHeaders: Array<string> | string | '*';
 
   /**
    * Headers exposed to the client in CORS responses
    * @default []
+   *
+   * These are headers that in simple terms give the client "Permission" to access the headers in the response.
+   * For more context, the response can send as many headers as it wants, but the client can only access the headers that are exposed
+   * in this array.
    */
   exposedHeaders: Array<string>;
 

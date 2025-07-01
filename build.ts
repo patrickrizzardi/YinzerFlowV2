@@ -2,57 +2,34 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import dts from 'bun-plugin-dts';
 
-// Check for dead packages
-console.log('Checking for dead packages...');
-try {
-  execSync('bun run find-unused-packages', { stdio: 'inherit' });
-  console.log('No dead packages found.');
-} catch (_) {
-  // We don't need to log the error because the files will be logged in the find-unused-packages command
-  console.error('Error checking for dead packages.');
-  process.exit(1);
-}
 
-// Clean the output directory
-console.log('Cleaning output directory...');
-try {
-  execSync('rm -rf lib');
-  console.log('Output directory cleaned.');
-} catch (error: unknown) {
-  console.error('Error cleaning output directory:', error instanceof Error ? error.message : String(error));
-}
 
-// Create the output directory if it doesn't exist
-if (!existsSync('lib')) {
-  mkdirSync('lib');
-  console.log('Created output directory.');
-}
 
-// Run tests and ensure coverage is 95%
-console.log('Running tests and ensuring coverage is 95%...');
-try {
-  execSync('bun run test:production', { stdio: 'inherit' });
-  console.log('Tests passed and coverage is 95%.');
-} catch (error: unknown) {
-  console.error('Error running tests or coverage is below 95%:', error instanceof Error ? error.message : String(error));
-  process.exit(1);
-}
 
-// Check prettier format and linting
-console.log('Checking prettier format and linting...');
-try {
-  execSync('bun run lint', { stdio: 'inherit' });
-  execSync('bun run lint:format', { stdio: 'inherit' });
-  execSync('bun run lint:spelling', { stdio: 'inherit' });
-  console.log('Prettier format and linting passed.');
-} catch (error: unknown) {
-  console.error('Error checking prettier format and linting:', error instanceof Error ? error.message : String(error));
-  process.exit(1);
-}
+
+
+
+
+
 
 // Build the Main app
 console.log('Building Main app...');
 try {
+  execSync('bun run find-unused-packages', { stdio: 'inherit' }); // Check for unused packages
+  execSync('bun run lint', { stdio: 'inherit' });
+  execSync('bun run lint:format', { stdio: 'inherit' });
+  execSync('bun run lint:spelling', { stdio: 'inherit' });
+  execSync('bun run test:production', { stdio: 'inherit' });
+
+  execSync('rm -rf lib'); // Remove the lib directory
+
+  // Create the output directory if it doesn't exist
+  if (!existsSync('lib')) {
+    mkdirSync('lib');
+    console.log('Created output directory.');
+  }
+
+  // Build the Main app
   await Bun.build({
     entrypoints: ['./app/core/YinzerFlow.ts'],
     outdir: './lib',
@@ -63,22 +40,50 @@ try {
       dts({
         output: {
           noBanner: true,
-          exportReferencedTypes: false,
+          exportReferencedTypes: true,
         },
       }),
     ],
   });
+
+  // Verify the size of the lib/index.js file is below 100KB
+  const { size } = Bun.file('lib/YinzerFlow.js');
+  if (size > 100000) {
+    console.error(`File size of lib/YinzerFlow.js is ${size} bytes, which is greater than 100KB`);
+    process.exit(1);
+  }
+
+  // Ensure
+
+  // Copy docs
+  if (!existsSync(`${import.meta.dir}/lib/docs`)) execSync(`mkdir -p ${import.meta.dir}/lib/docs`);
+  execSync(`cp -R ${import.meta.dir}/docs/* ${import.meta.dir}/lib/docs/`);
+
+  // Copy example
+  if (!existsSync(`${import.meta.dir}/lib/example`)) execSync(`mkdir -p ${import.meta.dir}/lib/example`);
+  execSync(`cp -R ${import.meta.dir}/example/* ${import.meta.dir}/lib/example/`);
+
+  // Copy LICENSE
+  execSync(`cp ${import.meta.dir}/LICENSE ${import.meta.dir}/lib/LICENSE`);
+
+  // Copy README.md
+  execSync(`cp ${import.meta.dir}/README.md ${import.meta.dir}/lib/README.md`);
+
+  // Copy package.json
+  execSync(`cp ${import.meta.dir}/package.json ${import.meta.dir}/lib/package.json`);
+
   console.log('Main app built successfully.');
 } catch (error: unknown) {
   console.error('Error during build:');
   if (error instanceof Error) {
     console.error(error.message);
-    console.error(error.stack);
+    // console.error(error.stack);
   } else {
     console.error(String(error));
   }
   process.exit(1);
 }
+
 
 // // Build the Constants
 // console.log('Building Constants...');

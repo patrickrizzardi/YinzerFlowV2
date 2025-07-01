@@ -1,7 +1,7 @@
-import type { InternalHttpMethod } from '@typedefs/constants/http.js';
+import type { InternalHttpMethod } from '@typedefs/constants/http.ts';
 import type { InternalSetupMethod } from '@typedefs/internal/InternalSetupImpl.d.ts';
-import type { GlobalHookOptionsResolved } from '@typedefs/internal/InternalHookRegistryImpl.js';
-import type { HandlerCallback } from '@typedefs/public/Context.js';
+import type { InternalGlobalHookOptions } from '@typedefs/internal/InternalHookRegistryImpl.ts';
+import type { HandlerCallback } from '@typedefs/public/Context.ts';
 
 export interface Setup {
   get: InternalSetupMethod;
@@ -12,11 +12,11 @@ export interface Setup {
   options: InternalSetupMethod;
   group: (
     prefix: string,
-    callback: (group: Record<Lowercase<InternalHttpMethod>, SetupMethodResolved>) => void,
-    options?: RouteRegistryOptionsResolved,
+    callback: (group: Record<Lowercase<InternalHttpMethod>, InternalSetupMethod>) => void,
+    options?: InternalRouteRegistryOptions,
   ) => void;
-  beforeAll: (handlers: Array<HandlerCallback>, options?: GlobalHookOptionsResolved) => void;
-  afterAll: (handlers: Array<HandlerCallback>, options?: GlobalHookOptionsResolved) => void;
+  beforeAll: (handlers: Array<HandlerCallback>, options?: InternalGlobalHookOptions) => void;
+  afterAll: (handlers: Array<HandlerCallback>, options?: InternalGlobalHookOptions) => void;
   onError: (handler: HandlerCallback) => void;
   onNotFound: (handler: HandlerCallback) => void;
 }

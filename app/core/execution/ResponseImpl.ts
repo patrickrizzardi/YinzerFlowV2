@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { formatBodyIntoString } from '@core/execution/utils/formatBodyIntoString.ts';
 import { determineEncoding } from '@core/execution/utils/determineEncoding.ts';
 import { inferContentType } from '@core/execution/utils/inferContentType.ts';
@@ -7,6 +8,7 @@ import { httpEncoding, httpStatus, httpStatusCode } from '@constants/http.ts';
 import type { InternalHttpEncoding, InternalHttpHeaders, InternalHttpStatus, InternalHttpStatusCode } from '@typedefs/constants/http.js';
 import type { Request } from '@typedefs/public/Request.ts';
 import type { InternalResponseImpl } from '@typedefs/internal/InternalResponseImpl.d.ts';
+import { determineContentLength } from '@core/execution/utils/determineContentLength.ts';
 
 export class ResponseImpl implements InternalResponseImpl {
   readonly _request: Request;
@@ -39,6 +41,12 @@ export class ResponseImpl implements InternalResponseImpl {
     // Example: HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html><body><h1>Hello, world!</h1></body></html>
     this._encoding = encoding;
     this._stringBody = `${statusLine}\n${headerLines.join('\n')}\n\n${body}`;
+
+    const contentLength = determineContentLength(this._stringBody, this._encoding);
+    this._setHeadersIfNotSet({
+      Date: dayjs().format('ddd, DD MMM YYYY HH:mm:ss [GMT]'),
+      'Content-Length': contentLength,
+    });
   }
 
   _setHeadersIfNotSet(headers: Partial<Record<InternalHttpHeaders, string>>): void {

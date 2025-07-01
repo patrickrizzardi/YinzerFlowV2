@@ -1,13 +1,13 @@
 services:
-  api:
+  app:
     user: bun
     image: oven/bun:1.2.17
     working_dir: /app
     volumes:
-      - .:/app
+      - ./:/app
     ports:
-      - "5005:5000"
-    command: sh -c "bun install && bun start:example"
+      - "5000:5000"
+    command: sh -c 'bun install && bun build:watch'
     tty: true
     stdin_open: true
     networks:
@@ -27,7 +27,7 @@ services:
     restart: no
     command: ["-t20", "-c400", "-d10s", "http://api:5000/status"]
     depends_on:
-      - api
+      - app
     networks:
       - yinzerflow-network
 
