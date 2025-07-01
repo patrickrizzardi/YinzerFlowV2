@@ -1,4 +1,5 @@
 import type { ServerConfiguration } from '@typedefs/public/Configuration.js';
+import type { InternalServerConfiguration } from '@typedefs/internal/InternalConfiguration.js';
 import { logLevels } from '@constants/log.ts';
 
 /**
@@ -45,17 +46,28 @@ const DEFAULT_BODY_PARSER_CONFIG = {
 };
 
 /**
+ * Default IP security configuration with secure defaults
+ */
+const DEFAULT_IP_SECURITY_CONFIG = {
+  trustedProxies: ['127.0.0.1', '::1'], // Localhost only by default
+  allowPrivateIps: true, // Allow private IPs for internal usage
+  headerPreference: ['x-forwarded-for', 'x-real-ip', 'cf-connecting-ip', 'x-client-ip', 'true-client-ip'],
+  maxChainLength: 10, // Reasonable proxy chain length
+  detectSpoofing: true, // Enable security by default
+};
+
+/**
  * Default configuration object
  */
-const DEFAULT_CONFIGURATION: ServerConfiguration = {
+const DEFAULT_CONFIGURATION: InternalServerConfiguration = {
   port: 5000,
   host: '0.0.0.0',
   logLevel: logLevels.off,
-  proxyHops: 0,
   cors: {
     enabled: false, // Disabled by default
   },
   bodyParser: DEFAULT_BODY_PARSER_CONFIG,
+  ipSecurity: DEFAULT_IP_SECURITY_CONFIG,
   connectionOptions: {
     socketTimeout: 30000,
     gracefulShutdownTimeout: 30000,
@@ -67,7 +79,7 @@ const DEFAULT_CONFIGURATION: ServerConfiguration = {
 /**
  * Validate JSON parser configuration minimums
  */
-const _validateJsonConfig = (config: ServerConfiguration['bodyParser']['json']): void => {
+const _validateJsonConfig = (config: InternalServerConfiguration['bodyParser']['json']): void => {
   if (config.maxSize < 1) {
     throw new Error('bodyParser.json.maxSize must be at least 1 byte');
   }
@@ -92,7 +104,7 @@ const _validateJsonConfig = (config: ServerConfiguration['bodyParser']['json']):
 /**
  * Validate file upload configuration minimums
  */
-const _validateFileUploadConfig = (config: ServerConfiguration['bodyParser']['fileUploads']): void => {
+const _validateFileUploadConfig = (config: InternalServerConfiguration['bodyParser']['fileUploads']): void => {
   if (config.maxFileSize < 1) {
     throw new Error('bodyParser.fileUploads.maxFileSize must be at least 1 byte');
   }
@@ -113,7 +125,7 @@ const _validateFileUploadConfig = (config: ServerConfiguration['bodyParser']['fi
 /**
  * Validate URL-encoded configuration minimums
  */
-const _validateUrlEncodedConfig = (config: ServerConfiguration['bodyParser']['urlEncoded']): void => {
+const _validateUrlEncodedConfig = (config: InternalServerConfiguration['bodyParser']['urlEncoded']): void => {
   if (config.maxSize < 1) {
     throw new Error('bodyParser.urlEncoded.maxSize must be at least 1 byte');
   }
@@ -132,9 +144,34 @@ const _validateUrlEncodedConfig = (config: ServerConfiguration['bodyParser']['ur
 };
 
 /**
+ * Validate IP security configuration minimums
+ */
+const _validateIpSecurityConfig = (config: InternalServerConfiguration['ipSecurity']): void => {
+  if (!Array.isArray(config.trustedProxies)) {
+    throw new Error('ipSecurity.trustedProxies must be an array');
+  }
+
+  if (!Array.isArray(config.headerPreference)) {
+    throw new Error('ipSecurity.headerPreference must be an array');
+  }
+
+  if (config.headerPreference.length === 0) {
+    throw new Error('ipSecurity.headerPreference must contain at least one header');
+  }
+
+  if (config.maxChainLength < 1) {
+    throw new Error('ipSecurity.maxChainLength must be at least 1');
+  }
+
+  if (config.maxChainLength > 50) {
+    throw new Error('ipSecurity.maxChainLength must not exceed 50 to prevent DoS attacks');
+  }
+};
+
+/**
  * Issue security warnings for risky JSON configurations
  */
-const _warnJsonConfig = (config: ServerConfiguration['bodyParser']['json']): void => {
+const _warnJsonConfig = (config: InternalServerConfiguration['bodyParser']['json']): void => {
   if (config.allowPrototypeProperties) {
     console.warn(
       '[SECURITY WARNING] bodyParser.json.allowPrototypeProperties is enabled. This allows prototype pollution attacks. ' +
@@ -163,7 +200,7 @@ const _warnJsonConfig = (config: ServerConfiguration['bodyParser']['json']): voi
 /**
  * Issue security warnings for risky file upload configurations
  */
-const _warnFileUploadConfig = (config: ServerConfiguration['bodyParser']['fileUploads']): void => {
+const _warnFileUploadConfig = (config: InternalServerConfiguration['bodyParser']['fileUploads']): void => {
   // Warn about very large file uploads (but don't block them)
   if (config.maxFileSize > 104857600) {
     // 100MB
@@ -202,9 +239,35 @@ const _warnFileUploadConfig = (config: ServerConfiguration['bodyParser']['fileUp
 };
 
 /**
+ * Issue security warnings for risky IP security configurations
+ */
+const _warnIpSecurityConfig = (config: InternalServerConfiguration['ipSecurity']): void => {
+  // Warn about wildcard or overly permissive trusted proxies
+  if (config.trustedProxies.length === 0) {
+    console.warn('[SECURITY WARNING] ipSecurity.trustedProxies is empty. No proxy headers will be trusted, which may prevent proper client IP detection.');
+  }
+
+  // Warn about very long proxy chains
+  if (config.maxChainLength > 20) {
+    console.warn(
+      `[SECURITY WARNING] ipSecurity.maxChainLength is set to ${config.maxChainLength}. ` +
+        'Very long proxy chains can consume significant resources and may indicate amplification attacks.',
+    );
+  }
+
+  // Warn if spoofing detection is disabled
+  if (!config.detectSpoofing) {
+    console.warn(
+      '[SECURITY WARNING] ipSecurity.detectSpoofing is disabled. ' +
+        'This reduces protection against IP spoofing attacks. Only disable if you have other protective measures.',
+    );
+  }
+};
+
+/**
  * Handle CORS configuration merging
  */
-const _handleCorsConfig = (defaultConfig: ServerConfiguration, userConfig?: Partial<ServerConfiguration>): void => {
+const _handleCorsConfig = (defaultConfig: InternalServerConfiguration, userConfig?: ServerConfiguration): void => {
   if (userConfig?.cors?.enabled) {
     // When CORS is enabled, merge with enabled defaults
     defaultConfig.cors = {
@@ -217,7 +280,7 @@ const _handleCorsConfig = (defaultConfig: ServerConfiguration, userConfig?: Part
 /**
  * Handle body parser configuration merging and validation
  */
-const _handleBodyParserConfig = (defaultConfig: ServerConfiguration, userConfig?: Partial<ServerConfiguration>): void => {
+const _handleBodyParserConfig = (defaultConfig: InternalServerConfiguration, userConfig?: ServerConfiguration): void => {
   if (userConfig?.bodyParser) {
     defaultConfig.bodyParser = {
       json: {
@@ -240,9 +303,25 @@ const _handleBodyParserConfig = (defaultConfig: ServerConfiguration, userConfig?
 };
 
 /**
+ * Handle IP security configuration merging and validation
+ */
+const _handleIpSecurityConfig = (defaultConfig: InternalServerConfiguration, userConfig?: ServerConfiguration): void => {
+  if (userConfig?.ipSecurity) {
+    defaultConfig.ipSecurity = {
+      ...DEFAULT_IP_SECURITY_CONFIG,
+      ...userConfig.ipSecurity,
+    };
+
+    // Validate configuration for security
+    _validateIpSecurityConfig(defaultConfig.ipSecurity);
+    _warnIpSecurityConfig(defaultConfig.ipSecurity);
+  }
+};
+
+/**
  * Validate port number
  */
-const _validatePort = (defaultConfig: ServerConfiguration, userConfig?: Partial<ServerConfiguration>): void => {
+const _validatePort = (defaultConfig: InternalServerConfiguration, userConfig?: ServerConfiguration): void => {
   if (userConfig?.port !== undefined) {
     const normalizedPort = Number(userConfig.port);
     if (isNaN(normalizedPort) || normalizedPort < 1 || normalizedPort > 65535) {
@@ -255,7 +334,7 @@ const _validatePort = (defaultConfig: ServerConfiguration, userConfig?: Partial<
 /**
  * Validate body parser configuration to prevent broken settings and warn about risky configurations
  */
-const _validateBodyParserConfig = (config: ServerConfiguration['bodyParser']): void => {
+const _validateBodyParserConfig = (config: InternalServerConfiguration['bodyParser']): void => {
   // Validate minimums for all parser types
   _validateJsonConfig(config.json);
   _validateFileUploadConfig(config.fileUploads);
@@ -268,14 +347,8 @@ const _validateBodyParserConfig = (config: ServerConfiguration['bodyParser']): v
 
 /**
  * Handle custom configuration
- *
- * @example
- * ```ts
- * handleCustomConfiguration({ port: 3000 });
- * // Returns { port: 3000, host: '0.0.0.0', logLevel: 'off', proxyHops: 0, connectionOptions: { socketTimeout: 30000, gracefulShutdownTimeout: 30000, keepAliveTimeout: 65000, headersTimeout: 66000 } }
- * ```
  */
-export const handleCustomConfiguration = (configuration?: Partial<ServerConfiguration>): ServerConfiguration => {
+export const handleCustomConfiguration = (configuration?: ServerConfiguration): InternalServerConfiguration => {
   // Start with default configuration
   const result = { ...DEFAULT_CONFIGURATION };
 
@@ -285,6 +358,7 @@ export const handleCustomConfiguration = (configuration?: Partial<ServerConfigur
   // Handle special configuration sections
   _handleCorsConfig(result, configuration);
   _handleBodyParserConfig(result, configuration);
+  _handleIpSecurityConfig(result, configuration);
   _validatePort(result, configuration);
 
   return result;

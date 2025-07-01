@@ -13,7 +13,10 @@ const createTestApp = (customConfig?: any) => {
   };
 };
 
-const createTestHandler = (returnValue: any): HandlerCallback => () => returnValue;
+const createTestHandler =
+  (returnValue: any): HandlerCallback =>
+  () =>
+    returnValue;
 
 const createHttpRequest = (method: string, path: string, headers: Array<string> = [], body = '') => {
   const headerString = headers.length > 0 ? `\r\n${headers.join('\r\n')}` : '';
@@ -22,10 +25,7 @@ const createHttpRequest = (method: string, path: string, headers: Array<string> 
 
 const createJsonRequest = (method: string, path: string, jsonBody: any) => {
   const body = JSON.stringify(jsonBody);
-  return createHttpRequest(method, path, [
-    'Content-Type: application/json',
-    `Content-Length: ${body.length}`,
-  ], body);
+  return createHttpRequest(method, path, ['Content-Type: application/json', `Content-Length: ${body.length}`], body);
 };
 
 const createExecutionTracker = () => {
@@ -123,14 +123,14 @@ describe('YinzerFlow', () => {
       },
       {
         description: 'should handle custom configuration with additional options',
-        config: { port: 9000, host: '192.168.1.1', logLevel: 'network', proxyHops: 2 },
+        config: { port: 9000, host: '192.168.1.1', logLevel: 'network' },
         expectedPort: 9000,
         expectedHost: '192.168.1.1',
       },
     ];
 
     it.each(configTestCases)('$description', ({ config, expectedPort, expectedHost }) => {
-      const customApp = new YinzerFlow(config as Partial<ServerConfiguration>);
+      const customApp = new YinzerFlow(config as ServerConfiguration);
       const status = customApp.status();
 
       expect(status.port).toBe(expectedPort);

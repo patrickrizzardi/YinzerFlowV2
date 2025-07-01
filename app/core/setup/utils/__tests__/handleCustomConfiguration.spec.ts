@@ -24,9 +24,9 @@ describe('handleCustomConfiguration', () => {
       expect(config.port).toBe(5000);
       expect(config.host).toBe('0.0.0.0');
       expect(config.logLevel).toBe(logLevels.off);
-      expect(config.proxyHops).toBe(0);
+      expect(config.ipSecurity.trustedProxies).toEqual(['127.0.0.1', '::1']);
       expect(config.cors).toBeDefined();
-      expect(config.cors?.enabled).toBe(false);
+      expect(config.cors.enabled).toBe(false);
 
       // Should have default body parser configuration
       expect(config.bodyParser).toBeDefined();
@@ -44,8 +44,8 @@ describe('handleCustomConfiguration', () => {
       expect(config.port).toBe(3000);
       expect(config.host).toBe('0.0.0.0');
       expect(config.logLevel).toBe(logLevels.off);
-      expect(config.proxyHops).toBe(0);
-      expect(config.cors?.enabled).toBe(false);
+      expect(config.ipSecurity.trustedProxies).toEqual(['127.0.0.1', '::1']);
+      expect(config.cors.enabled).toBe(false);
     });
 
     it('should normalize the port number if it is a string', () => {
@@ -70,10 +70,10 @@ describe('handleCustomConfiguration', () => {
         },
       });
 
-      expect(config.cors?.enabled).toBe(true);
-      expect(config.cors?.origin).toBe('https://example.com');
-      expect(config.cors?.credentials).toBe(true);
-      expect(config.cors?.methods).toEqual(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']); // Should merge with defaults
+      expect(config.cors.enabled).toBe(true);
+      expect(config.cors.origin).toBe('https://example.com');
+      expect(config.cors.credentials).toBe(true);
+      expect(config.cors.methods).toEqual(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']); // Should merge with defaults
     });
   });
 

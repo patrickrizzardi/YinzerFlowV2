@@ -71,55 +71,6 @@ app.post('/api/files', ({ request, response }) => {
 });
 ```
 
-## API Reference
-
-### setStatusCode(statusCode)
-
-Sets the HTTP status code for the response.
-
-```typescript
-response.setStatusCode(200);  // OK
-response.setStatusCode(201);  // Created
-response.setStatusCode(400);  // Bad Request
-response.setStatusCode(404);  // Not Found
-response.setStatusCode(500);  // Internal Server Error
-```
-
-### addHeaders(headers)
-
-Adds or updates response headers. Headers are validated for security before being set.
-
-```typescript
-// Single header
-response.addHeaders({ 'X-Custom-Header': 'value' });
-
-// Multiple headers
-response.addHeaders({
-  'Cache-Control': 'max-age=3600',
-  'X-API-Version': '2.0',
-  'Access-Control-Allow-Origin': '*'
-});
-
-// Security headers
-response.addHeaders({
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block'
-});
-```
-
-### removeHeaders(headerNames)
-
-Removes headers from the response.
-
-```typescript
-// Remove single header
-response.removeHeaders(['X-Powered-By']);
-
-// Remove multiple headers
-response.removeHeaders(['Server', 'X-Debug-Info', 'X-Internal-ID']);
-```
-
 ## Response Body Handling
 
 YinzerFlow automatically processes response bodies based on their type:
@@ -183,6 +134,55 @@ return true;        // "true", Content-Type: text/plain
 return new Date();  // ISO string, Content-Type: text/plain
 ```
 
+## API Reference
+
+### setStatusCode(statusCode)
+
+Sets the HTTP status code for the response.
+
+```typescript
+response.setStatusCode(200);  // OK
+response.setStatusCode(201);  // Created
+response.setStatusCode(400);  // Bad Request
+response.setStatusCode(404);  // Not Found
+response.setStatusCode(500);  // Internal Server Error
+```
+
+### addHeaders(headers)
+
+Adds or updates response headers. Headers are validated for security before being set.
+
+```typescript
+// Single header
+response.addHeaders({ 'X-Custom-Header': 'value' });
+
+// Multiple headers
+response.addHeaders({
+  'Cache-Control': 'max-age=3600',
+  'X-API-Version': '2.0',
+  'Access-Control-Allow-Origin': '*'
+});
+
+// Security headers
+response.addHeaders({
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block'
+});
+```
+
+### removeHeaders(headerNames)
+
+Removes headers from the response.
+
+```typescript
+// Remove single header
+response.removeHeaders(['X-Powered-By']);
+
+// Remove multiple headers
+response.removeHeaders(['Server', 'X-Debug-Info', 'X-Internal-ID']);
+```
+
 ## Common Use Cases
 
 - **Set Status Codes**: Configure HTTP status codes (200, 404, 500, etc.) to communicate request results to clients
@@ -243,5 +243,9 @@ YinzerFlow implements several security measures to prevent common response-based
 ### 🛡️ Status Code Validation
 - **Problem**: Invalid HTTP status codes can confuse clients or indicate server errors
 - **YinzerFlow Solution**: Automatic mapping of status codes to standard HTTP status messages ensures consistent and valid responses
+
+### 🛡️ Automatic Security Headers
+- **Problem**: Missing security headers leave applications vulnerable to clickjacking, MIME sniffing, and XSS attacks
+- **YinzerFlow Solution**: Automatically adds essential security headers to every response unless explicitly overridden by the application
 
 These security measures ensure YinzerFlow's response implementation follows security best practices and prevents common attack vectors while maintaining HTTP compliance and performance. 

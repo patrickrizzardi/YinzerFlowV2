@@ -31,7 +31,7 @@ if (!existsSync('lib')) {
 // Run tests and ensure coverage is 95%
 console.log('Running tests and ensuring coverage is 95%...');
 try {
-  execSync('bun test --coverage --coverage-threshold 95', { stdio: 'inherit' });
+  execSync('bun run test:production', { stdio: 'inherit' });
   console.log('Tests passed and coverage is 95%.');
 } catch (error: unknown) {
   console.error('Error running tests or coverage is below 95%:', error);

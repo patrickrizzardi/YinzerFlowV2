@@ -4,17 +4,18 @@ import { handleCustomConfiguration } from '@core/setup/utils/handleCustomConfigu
 import type { InternalSetupImpl, InternalSetupMethod } from '@typedefs/internal/InternalSetupImpl.ts';
 import { HookRegistryImpl } from '@core/execution/HookRegistryImpl.ts';
 import type { InternalGlobalHookOptions } from '@typedefs/internal/InternalHookRegistryImpl.js';
+import type { InternalServerConfiguration } from '@typedefs/internal/InternalConfiguration.js';
 import type { ServerConfiguration } from '@typedefs/public/Configuration.js';
 import type { InternalRouteRegistryOptions } from '@typedefs/internal/InternalRouteRegistryImpl.js';
 import { RouteRegistryImpl } from '@core/setup/RouteRegistryImpl.ts';
 import type { HandlerCallback } from '@typedefs/public/Context.js';
 
 export class SetupImpl implements InternalSetupImpl {
-  readonly _configuration: ServerConfiguration;
+  readonly _configuration: InternalServerConfiguration;
   readonly _routeRegistry = new RouteRegistryImpl();
   readonly _hooks = new HookRegistryImpl();
 
-  constructor(customConfiguration?: Partial<ServerConfiguration>) {
+  constructor(customConfiguration?: ServerConfiguration) {
     this._configuration = handleCustomConfiguration(customConfiguration);
   }
 

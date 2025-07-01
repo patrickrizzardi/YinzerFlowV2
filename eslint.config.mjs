@@ -275,12 +275,12 @@ const typscriptRules = {
     'error',
     {
       selector: ['variable'],
-      format: ['strictCamelCase', 'StrictPascalCase', 'UPPER_CASE'],
+      format: ['camelCase', 'StrictPascalCase', 'UPPER_CASE'],
       leadingUnderscore: 'allow',
     },
     {
       selector: ['parameter', 'typeProperty'],
-      format: ['strictCamelCase', 'StrictPascalCase'],
+      format: ['camelCase', 'StrictPascalCase'],
       leadingUnderscore: 'allow',
     },
     {

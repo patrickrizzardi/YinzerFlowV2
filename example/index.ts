@@ -107,4 +107,13 @@ const callback: HandlerCallback<{
 
 app.post('/login', callback);
 
+app.get('/api/data', ({ request }) => {
+  const userAgent = request.headers['user-agent'];
+  const accept = request.headers['accept'];
+  return {
+    success: true,
+    message: `userAgent: ${userAgent}, accept: ${accept}`,
+  };
+});
+
 await app.listen();

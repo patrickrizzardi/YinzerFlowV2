@@ -52,21 +52,23 @@ describe('RequestImpl', () => {
 
   describe('Configuration integration', () => {
     it('should use proxy configuration for IP extraction', () => {
-      const rawRequest = createRawRequest('GET /test HTTP/1.1\r\nHost: example.com\r\nX-Forwarded-For: 203.0.113.1, 192.168.1.100\r\n\r\n');
+      const rawRequest = createRawRequest('GET /test HTTP/1.1\r\nHost: example.com\r\nX-Forwarded-For: 203.0.113.1, 127.0.0.1\r\n\r\n');
 
-      const setupWithProxy = new SetupImpl({ proxyHops: 1 });
+      const setupWithProxy = new SetupImpl({
+        ipSecurity: { trustedProxies: ['127.0.0.1'] },
+      });
       const request = new RequestImpl(rawRequest, setupWithProxy);
 
-      expect(request.ipAddress).toBe('192.168.1.100');
+      expect(request.ipAddress).toBe('203.0.113.1');
     });
 
-    it('should handle no proxy configuration', () => {
-      const rawRequest = createRawRequest('GET /test HTTP/1.1\r\nHost: example.com\r\nX-Forwarded-For: 203.0.113.1, 192.168.1.100\r\n\r\n');
+    it('should handle basic IP extraction', () => {
+      const rawRequest = createRawRequest('GET /test HTTP/1.1\r\nHost: example.com\r\nX-Forwarded-For: 203.0.113.1\r\n\r\n');
 
-      const setup = new SetupImpl({ proxyHops: 0 });
+      const setup = new SetupImpl();
       const request = new RequestImpl(rawRequest, setup);
 
-      expect(request.ipAddress).toBe('203.0.113.1, 192.168.1.100');
+      expect(request.ipAddress).toBe('203.0.113.1');
     });
   });
 

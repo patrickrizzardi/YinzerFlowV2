@@ -12,7 +12,7 @@ export class YinzerFlow extends SetupImpl {
   private _isListening = false;
   private _server?: ReturnType<typeof createServer>;
 
-  constructor(configuration?: Partial<ServerConfiguration>) {
+  constructor(configuration?: ServerConfiguration) {
     super(configuration);
 
     // Initialize logging

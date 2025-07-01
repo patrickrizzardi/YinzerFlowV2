@@ -46,6 +46,23 @@ const app = new YinzerFlow({
 });
 ```
 
+## IP Security Configuration
+
+IP address validation and spoofing protection for accurate client identification. See [IP Security Documentation](./ip-security.md) for detailed setup, security considerations, and advanced use cases.
+
+```typescript
+const app = new YinzerFlow({
+  port: 3000,
+  ipSecurity: {
+    trustedProxies: ['127.0.0.1', '::1', '192.168.1.10'],
+    allowPrivateIps: true,
+    headerPreference: ['x-forwarded-for', 'x-real-ip', 'cf-connecting-ip'],
+    maxChainLength: 10,
+    detectSpoofing: true
+  }
+});
+```
+
 ## Server Configuration
 
 ### Connection Options
@@ -56,7 +73,7 @@ Fine-tune server connection behavior and timeouts:
 const app = new YinzerFlow({
   port: 3000,
   host: '0.0.0.0', // Bind address
-  proxyHops: 1, // Number of proxy hops for IP extraction
+  // IP extraction is now handled by ipSecurity configuration
   connectionOptions: {
     socketTimeout: 30000, // 30 seconds
     gracefulShutdownTimeout: 30000,

@@ -367,6 +367,7 @@ describe('CORS Functionality', () => {
       const malformedOriginCases = [
         { origin: '', description: 'empty string' },
         { origin: 'null', description: 'null string' },
+        // eslint-disable-next-line no-script-url
         { origin: 'javascript:alert(1)', description: 'javascript protocol' },
         { origin: 'data:text/html,<script>alert(1)</script>', description: 'data protocol' },
         { origin: 'not-a-url', description: 'malformed URL' },
@@ -528,6 +529,7 @@ describe('CORS Functionality', () => {
         const malformedOrigins = [
           '',
           'null',
+          // eslint-disable-next-line no-script-url
           'javascript:alert(1)',
           'data:text/html,<script>alert(1)</script>',
           'not-a-url',
