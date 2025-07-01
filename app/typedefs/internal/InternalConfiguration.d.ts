@@ -347,13 +347,38 @@ export interface InternalServerConfiguration {
   host: string;
 
   /**
-   * Logging level for YinzerFlow server
-   * - 'off': No logging (silent mode)
-   * - 'verbose': Application logging with Pittsburgh personality (level 1)
-   * - 'network': Network logging + application logging (level 2)
-   * @default 'off'
+   * Application logging level for YinzerFlow server
+   * - 'off': No application logging (silent mode)
+   * - 'error': Only error messages
+   * - 'warn': Warning and error messages
+   * - 'info': All application logging with Pittsburgh personality
+   * @default 'warn'
    */
   logLevel: CreateEnum<typeof logLevels>;
+
+  /**
+   * Custom logger implementation
+   * If provided, this logger will be used instead of the built-in YinzerFlow logger
+   * Must implement the Logger interface
+   * @default undefined (uses built-in logger)
+   */
+  logger?: import('@typedefs/public/Logger.js').Logger;
+
+  /**
+   * Network request/response logging (nginx-style logs)
+   * Completely separate from application logs - simple on/off toggle
+   * @default false
+   */
+  networkLogs: boolean;
+
+  /**
+   * Custom logger for network logs (optional)
+   * If provided, network logs will be routed to this logger instead of built-in formatting
+   * Can be the same as the application logger or a different one
+   * Useful for unified monitoring (e.g., Winston with Datadog transport for both app and network logs)
+   * @default undefined (uses built-in network logging)
+   */
+  networkLogger?: import('@typedefs/public/Logger.js').Logger;
 
   /**
    * Cross-Origin Resource Sharing configuration

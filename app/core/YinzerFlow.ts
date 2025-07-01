@@ -15,12 +15,23 @@ export class YinzerFlow extends SetupImpl {
   constructor(configuration?: ServerConfiguration) {
     super(configuration);
 
-    // Initialize logging
+    // Set custom logger if provided (routes all log calls to user's logger)
+    if (this._configuration.logger) {
+      log.setCustomLogger(this._configuration.logger);
+    }
+
+    // Set log level on built-in logger (always available)
     log.setLogLevel(this._configuration.logLevel);
 
     // Configure network logging - simple boolean toggle
     networkLog.setEnabled(this._configuration.networkLogs);
 
+    // Set network logger if provided (optional - can be same as app logger or different)
+    if (this._configuration.networkLogger) {
+      networkLog.setNetworkLogger(this._configuration.networkLogger);
+    }
+
+    // This will route to custom logger if set, otherwise use built-in styling
     log.info(
       'YinzerFlow initialized with logging enabled',
       `${colors.green}level: ${this._configuration.logLevel}, networkLogs: ${this._configuration.networkLogs}${colors.reset}`,

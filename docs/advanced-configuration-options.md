@@ -92,14 +92,23 @@ const app = new YinzerFlow({
 
 ### Logging Configuration
 
-Control framework logging output:
+Control framework logging output with built-in Pittsburgh personality or custom logging libraries. See [Logging Documentation](./logging.md) for detailed setup, custom logger integration, and advanced use cases.
 
 ```typescript
 const app = new YinzerFlow({
   port: 3000,
-  logLevel: 'info' // 'off', 'error', 'warn', 'info', 'verbose'
+  logLevel: 'info', // 'off', 'error', 'warn', 'info'
+  networkLogs: true, // Enable nginx-style request logging
+  logger: customLogger // Optional custom logger implementation
 });
 ```
+
+**Key Points:**
+- **Application logs** (`log.info()`, `log.warn()`, etc.) route to custom logger if provided
+- **Network logs** (nginx-style requests) can route to custom logger or use built-in formatting
+- **Unified interface**: Framework and user code use same `log.info()` calls
+- **Zero breaking changes**: Existing code continues to work with custom loggers
+- **Flexible routing**: Use same logger for both (unified monitoring) or different loggers (separate concerns)
 
 
 

@@ -9,6 +9,7 @@
  * HTTP Status Text
  * Maps status codes to their standard text representations
  */
+// Use const assertions for better tree-shaking
 export const httpStatus = {
   ok: 'OK',
   created: 'Created',

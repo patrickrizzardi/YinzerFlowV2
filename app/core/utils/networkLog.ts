@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import type { InternalContextImpl } from '@typedefs/internal/InternalContextImpl.ts';
+import type { Logger } from '@typedefs/public/Logger.js';
 
 /**
  * YinzerFlow Network Logging System 🌐
@@ -31,6 +32,7 @@ const yinzerPhrases = {
 
 // Global network logging configuration
 let networkLoggingEnabled = false;
+let networkLogger: Logger | null = null;
 
 // Helper functions (shared utilities)
 export const formatTimestamp = (): string => dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
@@ -128,12 +130,25 @@ const connection = (event: 'connect' | 'disconnect' | 'error', clientIp?: string
   const ip = clientIp ?? 'unknown';
   const eventDetails = details ? ` - ${details}` : '';
 
+  let message: string;
+  let level: 'info' | 'warn' | 'error' = 'info';
+
   if (event === 'connect') {
-    console.log(`${colors.gray}[${logPrefix}] 🤝 [${timestamp}] [NETWORK] New visitor from ${ip} - Welcome to the 'Burgh!${colors.reset}`);
+    message = `🤝 [NETWORK] New visitor from ${ip} - Welcome to the 'Burgh!`;
   } else if (event === 'disconnect') {
-    console.log(`${colors.gray}[${logPrefix}] 👋 [${timestamp}] [NETWORK] ${ip} headed out - Thanks for stopping by, yinz come back now!${colors.reset}`);
+    message = `👋 [NETWORK] ${ip} headed out - Thanks for stopping by, yinz come back now!`;
   } else {
-    console.log(`${colors.red}[${logPrefix}] 💥 [${timestamp}] [NETWORK] Connection trouble with ${ip}${eventDetails} - That's not good, n'at!${colors.reset}`);
+    message = `💥 [NETWORK] Connection trouble with ${ip}${eventDetails} - That's not good, n'at!`;
+    level = 'error';
+  }
+
+  if (networkLogger) {
+    // Route to custom network logger - let it handle timestamp formatting
+    networkLogger[level](message);
+  } else {
+    // Use built-in styling with timestamp
+    const color = level === 'error' ? colors.red : colors.gray;
+    console.log(`${color}[${logPrefix}] [${timestamp}] ${message}${colors.reset}`);
   }
 };
 
@@ -152,14 +167,23 @@ const request = (context: InternalContextImpl, startTime: number, endTime: numbe
   const userAgent = req.headers['user-agent'] ? `"${req.headers['user-agent']}"` : '"-"';
   const statusEmoji = _getStatusEmoji(statusCode);
 
-  // Main nginx-style log with consistent formatting (using consistent timestamp)
+  // Main nginx-style log entry
   const logEntry = `🏠 ${clientIp} - - [${formatTimestamp()}] "${method} ${path} ${protocol}" ${statusCode} ${responseSize}b ${referer} ${userAgent} ${responseTimeMs}ms ${statusEmoji}`;
-  console.log(`${colors.gray}[${logPrefix}] [${formatTimestamp()}] [NETWORK] ${logEntry}${colors.reset}`);
 
-  // Performance log with Pittsburgh personality and consistent formatting
+  // Performance details
   const timeMs = parseFloat(responseTimeMs);
   const { emoji, phrase } = _getPerformanceDetails(timeMs);
-  console.log(`${colors.magenta}[${logPrefix}] ${emoji} [${formatTimestamp()}] [PERF] Response time: ${responseTimeMs}ms - ${phrase}${colors.reset}`);
+  const perfEntry = `${emoji} [PERF] Response time: ${responseTimeMs}ms - ${phrase}`;
+
+  if (networkLogger) {
+    // Route to custom network logger - let it handle timestamp formatting
+    networkLogger.info(`[NETWORK] ${logEntry}`);
+    networkLogger.info(`[PERF] ${perfEntry}`);
+  } else {
+    // Use built-in styling with timestamp
+    console.log(`${colors.gray}[${logPrefix}] [${formatTimestamp()}] [NETWORK] ${logEntry}${colors.reset}`);
+    console.log(`${colors.magenta}[${logPrefix}] ${emoji} [${formatTimestamp()}] [PERF] Response time: ${responseTimeMs}ms - ${phrase}${colors.reset}`);
+  }
 };
 
 const serverStart = (port?: number, host?: string): void => {
@@ -168,9 +192,15 @@ const serverStart = (port?: number, host?: string): void => {
   const timestamp = formatTimestamp();
   const address = port && host ? `${host}:${port}` : 'unknown';
   const phrase = getRandomPhrase('positive');
-  console.log(
-    `${colors.gray}[${logPrefix}] 🚀 [${timestamp}] [NETWORK] YinzerFlow server is up and running at ${address} - Ready to serve yinz all, ${phrase}!${colors.reset}`,
-  );
+  const message = `🚀 [NETWORK] YinzerFlow server is up and running at ${address} - Ready to serve yinz all, ${phrase}!`;
+
+  if (networkLogger) {
+    // Route to custom network logger - let it handle timestamp formatting
+    networkLogger.info(message);
+  } else {
+    // Use built-in styling with timestamp
+    console.log(`${colors.gray}[${logPrefix}] [${timestamp}] ${message}${colors.reset}`);
+  }
 };
 
 const serverStop = (port?: number, host?: string): void => {
@@ -179,9 +209,15 @@ const serverStop = (port?: number, host?: string): void => {
   const timestamp = formatTimestamp();
   const address = port && host ? `${host}:${port}` : 'unknown';
   const phrase = getRandomPhrase('neutral');
-  console.log(
-    `${colors.gray}[${logPrefix}] 🛑 [${timestamp}] [NETWORK] YinzerFlow server at ${address} is shutting down - See yinz later, ${phrase}!${colors.reset}`,
-  );
+  const message = `🛑 [NETWORK] YinzerFlow server at ${address} is shutting down - See yinz later, ${phrase}!`;
+
+  if (networkLogger) {
+    // Route to custom network logger - let it handle timestamp formatting
+    networkLogger.info(message);
+  } else {
+    // Use built-in styling with timestamp
+    console.log(`${colors.gray}[${logPrefix}] [${timestamp}] ${message}${colors.reset}`);
+  }
 };
 
 const serverError = (port?: number, host?: string, details?: string): void => {
@@ -191,9 +227,15 @@ const serverError = (port?: number, host?: string, details?: string): void => {
   const address = port && host ? `${host}:${port}` : 'unknown';
   const eventDetails = details ? ` - ${details}` : '';
   const phrase = getRandomPhrase('negative');
-  console.log(
-    `${colors.red}[${logPrefix}] 💥 [${timestamp}] [NETWORK] Server error at ${address}${eventDetails} - Something's not right, ${phrase}!${colors.reset}`,
-  );
+  const message = `💥 [NETWORK] Server error at ${address}${eventDetails} - Something's not right, ${phrase}!`;
+
+  if (networkLogger) {
+    // Route to custom network logger - let it handle timestamp formatting
+    networkLogger.error(message);
+  } else {
+    // Use built-in styling with timestamp
+    console.log(`${colors.red}[${logPrefix}] [${timestamp}] ${message}${colors.reset}`);
+  }
 };
 
 // =============================================================================
@@ -207,9 +249,17 @@ const setEnabled = (enabled: boolean): void => {
   networkLoggingEnabled = enabled;
 };
 
+/**
+ * Set a custom logger for network logging (optional)
+ */
+const setNetworkLogger = (logger: Logger): void => {
+  networkLogger = logger;
+};
+
 export const networkLog = {
   // Configuration
   setEnabled,
+  setNetworkLogger,
 
   // Network logging functions
   connection,

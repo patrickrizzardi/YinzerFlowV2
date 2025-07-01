@@ -1,4 +1,5 @@
 import { colors, formatTimestamp, logPrefix } from '@core/utils/networkLog.ts';
+import type { Logger } from '@typedefs/public/Logger.js';
 
 /**
  * YinzerFlow Main Logging System 🏗️
@@ -29,6 +30,7 @@ const yinzerPhrases = {
 
 // Global configuration
 let currentLogLevel: number = internalLogLevels.warn;
+let customLogger: Logger | null = null;
 
 // Helper functions (formatTimestamp imported from networkLog.ts)
 
@@ -45,17 +47,38 @@ const getRandomPhrase = (type: 'negative' | 'neutral' | 'positive'): string => {
 
 const info = (...args: unknown[]): void => {
   if (currentLogLevel < internalLogLevels.info) return;
-  logWithStyle('info', ...args);
+
+  if (customLogger) {
+    // Route to user's custom logger
+    customLogger.info(...args);
+  } else {
+    // Use built-in YinzerFlow styling
+    logWithStyle('info', ...args);
+  }
 };
 
 const warn = (...args: unknown[]): void => {
   if (currentLogLevel < internalLogLevels.warn) return;
-  logWithStyle('warn', ...args);
+
+  if (customLogger) {
+    // Route to user's custom logger
+    customLogger.warn(...args);
+  } else {
+    // Use built-in YinzerFlow styling
+    logWithStyle('warn', ...args);
+  }
 };
 
 const error = (...args: unknown[]): void => {
   if (currentLogLevel < internalLogLevels.error) return;
-  logWithStyle('error', ...args);
+
+  if (customLogger) {
+    // Route to user's custom logger
+    customLogger.error(...args);
+  } else {
+    // Use built-in YinzerFlow styling
+    logWithStyle('error', ...args);
+  }
 };
 
 // Verbose logging removed - just use info for detailed logging
@@ -65,32 +88,32 @@ const perf = (message: string, timeMs: number, data?: unknown): void => {
   const timestamp = formatTimestamp();
 
   // Performance-based emojis and phrases
-  let emoji = '❓';
+  let emoji = '❓ ';
   let phrase = '';
 
   // < 50ms: Truly instant, users can't perceive any delay
   if (timeMs < 50) {
-    emoji = '⚡';
+    emoji = '⚡ ';
     phrase = Math.random() < 0.5 ? "lightning quick n'at!" : 'faster than a Stillers touchdown!';
     // 50-100ms: Still feels instant for most interactions
   } else if (timeMs < 100) {
-    emoji = '🔥';
+    emoji = '🔥 ';
     phrase = Math.random() < 0.5 ? "that's the way!" : "smooth as butter n'at!";
     // 100-200ms: Google's "good" threshold, still very responsive
   } else if (timeMs < 200) {
-    emoji = '✅';
+    emoji = '✅ ';
     phrase = Math.random() < 0.5 ? 'not bad yinz!' : "keepin' up just fine!";
     // 200-500ms: Noticeable but acceptable for complex operations
   } else if (timeMs < 500) {
-    emoji = '⚠️';
+    emoji = '⚠️ ';
     phrase = Math.random() < 0.5 ? 'eh, could be better' : "slowin' down a bit there";
     // 500ms-1s: Users start getting impatient
   } else if (timeMs < 1000) {
-    emoji = '🐌';
+    emoji = '🐌 ';
     phrase = Math.random() < 0.5 ? "that's draggin' n'at" : "c'mon, pick up the pace!";
     // > 1s: Definitely problematic, needs attention
   } else {
-    emoji = '💥';
+    emoji = '💥 ';
     phrase = Math.random() < 0.5 ? 'what a jagoff response time!' : 'slower than traffic on the Parkway!';
   }
 
@@ -119,6 +142,13 @@ const setLogLevel = (level: 'error' | 'info' | 'off' | 'warn'): void => {
   } as const;
 
   currentLogLevel = levelMap[level];
+};
+
+/**
+ * Set a custom logger for output routing
+ */
+const setCustomLogger = (logger: Logger): void => {
+  customLogger = logger;
 };
 
 /**
@@ -154,12 +184,14 @@ const logWithStyle = (level: 'error' | 'info' | 'warn', ...args: unknown[]): voi
   const prefix = `${color}[${logPrefix}] ${emoji}[${timestamp}] [${level.toUpperCase()}]${colors.reset}`;
 
   // Let console.log handle all arguments naturally - just like console.log does
+  // In production, this could be replaced with a no-op for zero bundle impact
   console[consoleMethod](`${prefix}`, ...args, `- ${phrase}`);
 };
 
 export const log = {
   // Configuration
   setLogLevel,
+  setCustomLogger,
 
   // Main logging functions with Pittsburgh personality
   info,
@@ -170,3 +202,6 @@ export const log = {
   // Constants for convenience
   levels: internalLogLevels,
 };
+
+// Export the Logger interface for custom implementations
+export type { Logger } from '@typedefs/public/Logger.js';
