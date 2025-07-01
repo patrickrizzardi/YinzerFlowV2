@@ -11,8 +11,6 @@ const createTestRequest = (requestString = 'GET / HTTP/1.1\r\nHost: localhost\r\
   return new RequestImpl(Buffer.from(requestString), new SetupImpl());
 };
 
-
-
 const createCompleteResponse = (request: Request, statusCode: InternalHttpStatusCode, headers: Record<string, string>, body: any) => {
   const response = new ResponseImpl(request);
   response.setStatusCode(statusCode);

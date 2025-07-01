@@ -135,7 +135,7 @@ const _createValidIpResult = (options: {
     ip: clientIp,
     isValid: true,
     isPrivate,
-    source: headerName as InternalIpAddressResult['source'],
+    source: headerName,
     trusted,
   };
 };
@@ -198,7 +198,7 @@ export const parseIpAddressSecure = (
   headers: Partial<Record<InternalHttpHeaders, string>>,
   configOverride: Partial<InternalIpValidationConfig> = {},
 ): InternalIpAddressResult => {
-  const serverConfig = setup._configuration.ipValidation;
+  const serverConfig = setup._configuration.ipSecurity;
   const finalConfig = { ...serverConfig, ...configOverride };
 
   // Try to extract IP from headers first
@@ -225,4 +225,3 @@ export const parseIpAddress = (setup: InternalSetupImpl, headers: Partial<Record
   const result = parseIpAddressSecure(setup, headers);
   return result.ip;
 };
-

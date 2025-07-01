@@ -1,6 +1,7 @@
 import type { ServerConfiguration } from '@typedefs/public/Configuration.js';
 import type { InternalServerConfiguration } from '@typedefs/internal/InternalConfiguration.js';
 import { logLevels } from '@constants/log.ts';
+import { httpStatusCode } from '@constants/http.ts';
 
 /**
  * Default CORS configuration for when CORS is enabled
@@ -14,7 +15,7 @@ const DEFAULT_CORS_ENABLED_CONFIG = {
   credentials: false,
   maxAge: 86400, // 24 hours
   preflightContinue: false,
-  optionsSuccessStatus: 204,
+  optionsSuccessStatus: httpStatusCode.noContent,
 };
 
 /**
@@ -270,9 +271,11 @@ const _warnIpSecurityConfig = (config: InternalServerConfiguration['ipSecurity']
 const _handleCorsConfig = (defaultConfig: InternalServerConfiguration, userConfig?: ServerConfiguration): void => {
   if (userConfig?.cors?.enabled) {
     // When CORS is enabled, merge with enabled defaults
+    // We ensure enabled is literally true to satisfy the type constraint
     defaultConfig.cors = {
       ...DEFAULT_CORS_ENABLED_CONFIG,
       ...userConfig.cors,
+      enabled: true, // Override to ensure literal true type
     };
   }
 };

@@ -1,5 +1,5 @@
 import type { InternalContentDisposition, InternalFileUpload, InternalMultipartFormData } from '@typedefs/internal/InternalRequestImpl.ts';
-import type { FileUploadConfiguration } from '@typedefs/public/Configuration.js';
+import type { InternalFileUploadConfiguration } from '@typedefs/internal/InternalConfiguration.js';
 
 /**
  * Split a multipart section into headers and content
@@ -105,7 +105,7 @@ const calculateContentLength = (content: Buffer | string): number => (Buffer.isB
 /**
  * Validate file against security configuration
  */
-const _validateFileUpload = (file: InternalFileUpload, config?: FileUploadConfiguration): void => {
+const _validateFileUpload = (file: InternalFileUpload, config?: InternalFileUploadConfiguration): void => {
   if (!config) return;
 
   // SECURITY: Check file size
@@ -154,7 +154,7 @@ const handleFileUpload = ({
   contentDisposition: InternalContentDisposition;
   contentSection: string;
   headersSection: string;
-  config?: FileUploadConfiguration | undefined;
+  config?: InternalFileUploadConfiguration | undefined;
 }): InternalFileUpload => {
   const contentTypeValue = extractSectionContentType(headersSection);
 
@@ -193,7 +193,7 @@ const handleFileUpload = ({
  * // Returns { fields: { ... }, files: [...] }
  * ```
  */
-export const parseMultipartFormData = (body: string, boundary: string, config?: FileUploadConfiguration): InternalMultipartFormData => {
+export const parseMultipartFormData = (body: string, boundary: string, config?: InternalFileUploadConfiguration): InternalMultipartFormData => {
   const result: InternalMultipartFormData = {
     fields: {},
     files: [],

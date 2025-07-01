@@ -2,7 +2,7 @@ import type { DeepPartial } from '@typedefs/internal/Generics.js';
 import type {
   InternalCorsDisabledConfiguration,
   InternalCorsEnabledConfiguration,
-  InternalServerConfigurationShape,
+  InternalServerConfiguration,
 } from '@typedefs/internal/InternalConfiguration.js';
 
 /**
@@ -11,7 +11,7 @@ import type {
  *
  * This is created by making the complete internal ServerConfigurationShape partially optional
  */
-export type ServerConfiguration = DeepPartial<InternalServerConfigurationShape>;
+export type ServerConfiguration = DeepPartial<InternalServerConfiguration>;
 
 /**
  * CORS Configuration Options

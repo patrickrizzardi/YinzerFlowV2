@@ -27,9 +27,11 @@
     "EBML",
     "FLAC",
     "FTYP",
+    "keepin",
     "lockb",
     "pids",
     "rizzardi",
+    "sayin",
     "SEVENZ",
     "XXSS",
     "yinz",
@@ -52,7 +54,9 @@
    * only need to ignore stuff not in gitignore
    */
   "ignorePaths": [
-    "bun.lockb"
+    "bun.lockb",
+    "lib",
+    "__tests__"
   ],
   /**
    * useGitignore - use .gitignore file(s) to exclude files and folders

@@ -362,7 +362,7 @@ export interface InternalServerConfiguration {
   /**
    * IP address security and validation configuration
    */
-  ipValidation: InternalIpValidationConfig;
+  ipSecurity: InternalIpValidationConfig;
 
   /**
    * Server connection options

@@ -19,7 +19,7 @@ try {
   execSync('rm -rf lib');
   console.log('Output directory cleaned.');
 } catch (error: unknown) {
-  console.error('Error cleaning output directory:', error);
+  console.error('Error cleaning output directory:', error instanceof Error ? error.message : String(error));
 }
 
 // Create the output directory if it doesn't exist
@@ -34,7 +34,7 @@ try {
   execSync('bun run test:production', { stdio: 'inherit' });
   console.log('Tests passed and coverage is 95%.');
 } catch (error: unknown) {
-  console.error('Error running tests or coverage is below 95%:', error);
+  console.error('Error running tests or coverage is below 95%:', error instanceof Error ? error.message : String(error));
   process.exit(1);
 }
 
@@ -46,7 +46,7 @@ try {
   execSync('bun run lint:spelling', { stdio: 'inherit' });
   console.log('Prettier format and linting passed.');
 } catch (error: unknown) {
-  console.error('Error checking prettier format and linting:', error);
+  console.error('Error checking prettier format and linting:', error instanceof Error ? error.message : String(error));
   process.exit(1);
 }
 

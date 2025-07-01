@@ -20,7 +20,7 @@ export interface InternalIpAddressResult {
   /**
    * Source of the IP address (header name or 'socket' for direct connection)
    */
-  source: 'cf-connecting-ip' | 'socket' | 'true-client-ip' | 'x-client-ip' | 'x-forwarded-for' | 'x-real-ip';
+  source: string | 'cf-connecting-ip' | 'socket' | 'true-client-ip' | 'x-client-ip' | 'x-forwarded-for' | 'x-real-ip';
 
   /**
    * Whether the IP came from a trusted proxy

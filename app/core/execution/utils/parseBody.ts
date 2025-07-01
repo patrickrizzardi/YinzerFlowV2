@@ -5,7 +5,7 @@ import { contentType } from '@constants/http.ts';
 import { parseUrlEncodedForm } from '@core/execution/utils/parseUrlEncodedForm.ts';
 import type { InternalContentType } from '@typedefs/constants/http.js';
 import { inferContentTypeFromString } from '@core/execution/utils/inferContentType.ts';
-import type { BodyParserConfiguration } from '@typedefs/public/Configuration.js';
+import type { InternalBodyParserConfiguration } from '@typedefs/internal/InternalConfiguration.js';
 
 /**
  * Options for parsing request body
@@ -24,13 +24,13 @@ export interface ParseBodyOptions {
   /**
    * Body parser security configuration
    */
-  config?: BodyParserConfiguration;
+  config?: InternalBodyParserConfiguration;
 }
 
 /**
  * Validate request body size based on content type
  */
-const _validateBodySize = (body: string, mainContentType: string, config: BodyParserConfiguration): void => {
+const _validateBodySize = (body: string, mainContentType: string, config: InternalBodyParserConfiguration): void => {
   const bodySize = Buffer.byteLength(body, 'utf8');
 
   if (mainContentType === contentType.json) {
@@ -106,5 +106,3 @@ export const parseBody = (body: string, options: ParseBodyOptions = {}): unknown
   // Note: Size limits are already applied above if config is provided
   return body;
 };
-
-
