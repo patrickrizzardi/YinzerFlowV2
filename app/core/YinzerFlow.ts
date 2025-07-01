@@ -112,7 +112,7 @@ export class YinzerFlow extends SetupImpl {
         if (this._configuration.logLevel !== logLevels.off) {
           log.network.connection('error', clientAddress, `Unexpected error: ${errorMessage}`);
         }
-        console.error('Unexpected error in request processing:', error);
+        log.error('Unexpected error in request processing', error);
         socket.destroy();
       });
     });
@@ -121,7 +121,7 @@ export class YinzerFlow extends SetupImpl {
       if (this._configuration.logLevel !== logLevels.off) {
         log.network.connection('error', clientAddress, error.message);
       }
-      console.error('Socket error:', error);
+      log.error('Socket error', error);
     });
 
     socket.on('close', () => {

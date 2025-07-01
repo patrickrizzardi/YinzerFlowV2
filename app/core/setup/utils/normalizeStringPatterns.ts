@@ -1,3 +1,5 @@
+import { log } from '@core/utils/log.ts';
+
 /**
  * Normalize the path to ensure consistent format
  *
@@ -40,7 +42,7 @@ export const normalizePath = (path: string): string => {
   } catch (_) {
     // If decoding fails (malformed URL), use original
     // This prevents crashes from malicious URLs
-    console.warn('Failed to decode URL path:', normalizedPath);
+    log.warn('Failed to decode URL path', { path: normalizedPath });
   }
 
   // Step 3: Add leading slash if not present

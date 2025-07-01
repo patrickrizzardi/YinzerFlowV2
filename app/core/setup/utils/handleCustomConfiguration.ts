@@ -2,6 +2,7 @@ import type { ServerConfiguration } from '@typedefs/public/Configuration.js';
 import type { InternalServerConfiguration } from '@typedefs/internal/InternalConfiguration.js';
 import { logLevels } from '@constants/log.ts';
 import { httpStatusCode } from '@constants/http.ts';
+import { log } from '@core/utils/log.ts';
 
 /**
  * Default CORS configuration for when CORS is enabled
@@ -174,7 +175,7 @@ const _validateIpSecurityConfig = (config: InternalServerConfiguration['ipSecuri
  */
 const _warnJsonConfig = (config: InternalServerConfiguration['bodyParser']['json']): void => {
   if (config.allowPrototypeProperties) {
-    console.warn(
+    log.warn(
       '[SECURITY WARNING] bodyParser.json.allowPrototypeProperties is enabled. This allows prototype pollution attacks. ' +
         'Only enable this if you absolutely need it and have other protections in place.',
     );
@@ -183,7 +184,7 @@ const _warnJsonConfig = (config: InternalServerConfiguration['bodyParser']['json
   // Warn about very large JSON sizes (but don't block them)
   if (config.maxSize > 10485760) {
     // 10MB
-    console.warn(
+    log.warn(
       `[SECURITY WARNING] bodyParser.json.maxSize is set to ${config.maxSize} bytes (${Math.round(config.maxSize / 1024 / 1024)}MB). ` +
         'Large JSON payloads can cause memory exhaustion and DoS attacks. Consider if this size is necessary.',
     );
@@ -191,7 +192,7 @@ const _warnJsonConfig = (config: InternalServerConfiguration['bodyParser']['json
 
   // Warn about very deep nesting (but don't block it)
   if (config.maxDepth > 50) {
-    console.warn(
+    log.warn(
       `[SECURITY WARNING] bodyParser.json.maxDepth is set to ${config.maxDepth}. ` +
         'Very deep JSON nesting can cause stack overflow attacks. Consider if this depth is necessary.',
     );
@@ -205,7 +206,7 @@ const _warnFileUploadConfig = (config: InternalServerConfiguration['bodyParser']
   // Warn about very large file uploads (but don't block them)
   if (config.maxFileSize > 104857600) {
     // 100MB
-    console.warn(
+    log.warn(
       `[SECURITY WARNING] bodyParser.fileUploads.maxFileSize is set to ${config.maxFileSize} bytes (${Math.round(config.maxFileSize / 1024 / 1024)}MB). ` +
         'Large file uploads can consume significant server resources.',
     );
@@ -213,7 +214,7 @@ const _warnFileUploadConfig = (config: InternalServerConfiguration['bodyParser']
 
   if (config.maxTotalSize > 1073741824) {
     // 1GB
-    console.warn(
+    log.warn(
       `[SECURITY WARNING] bodyParser.fileUploads.maxTotalSize is set to ${config.maxTotalSize} bytes (${Math.round(config.maxTotalSize / 1024 / 1024 / 1024)}GB). ` +
         'Very large total upload sizes can cause memory and disk space exhaustion.',
     );
@@ -224,7 +225,7 @@ const _warnFileUploadConfig = (config: InternalServerConfiguration['bodyParser']
   const allowedDangerous = config.allowedExtensions.filter((ext) => dangerousExtensions.includes(ext.toLowerCase()));
 
   if (allowedDangerous.length > 0) {
-    console.warn(
+    log.warn(
       `[SECURITY WARNING] bodyParser.fileUploads.allowedExtensions includes dangerous file types: ${allowedDangerous.join(', ')}. ` +
         'This could allow execution of malicious files. Only allow these if absolutely necessary.',
     );
@@ -232,7 +233,7 @@ const _warnFileUploadConfig = (config: InternalServerConfiguration['bodyParser']
 
   // Warn if no blocked extensions and no allowed extensions (completely open)
   if (config.blockedExtensions.length === 0 && config.allowedExtensions.length === 0) {
-    console.warn(
+    log.warn(
       '[SECURITY WARNING] File uploads have no extension restrictions (no blockedExtensions and no allowedExtensions). ' +
         'Consider adding blockedExtensions or allowedExtensions to improve security.',
     );
@@ -245,12 +246,12 @@ const _warnFileUploadConfig = (config: InternalServerConfiguration['bodyParser']
 const _warnIpSecurityConfig = (config: InternalServerConfiguration['ipSecurity']): void => {
   // Warn about wildcard or overly permissive trusted proxies
   if (config.trustedProxies.length === 0) {
-    console.warn('[SECURITY WARNING] ipSecurity.trustedProxies is empty. No proxy headers will be trusted, which may prevent proper client IP detection.');
+    log.warn('[SECURITY WARNING] ipSecurity.trustedProxies is empty. No proxy headers will be trusted, which may prevent proper client IP detection.');
   }
 
   // Warn about very long proxy chains
   if (config.maxChainLength > 20) {
-    console.warn(
+    log.warn(
       `[SECURITY WARNING] ipSecurity.maxChainLength is set to ${config.maxChainLength}. ` +
         'Very long proxy chains can consume significant resources and may indicate amplification attacks.',
     );
@@ -258,7 +259,7 @@ const _warnIpSecurityConfig = (config: InternalServerConfiguration['ipSecurity']
 
   // Warn if spoofing detection is disabled
   if (!config.detectSpoofing) {
-    console.warn(
+    log.warn(
       '[SECURITY WARNING] ipSecurity.detectSpoofing is disabled. ' +
         'This reduces protection against IP spoofing attacks. Only disable if you have other protective measures.',
     );

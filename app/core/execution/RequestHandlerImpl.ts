@@ -3,6 +3,7 @@ import type { SetupImpl } from '@core/setup/SetupImpl.ts';
 import type { InternalContextImpl } from '@typedefs/internal/InternalContextImpl.ts';
 import type { InternalSetupImpl } from '@typedefs/internal/InternalSetupImpl.js';
 import { handleCors } from '@core/utils/cors.ts';
+import { log } from '@core/utils/log.ts';
 
 /**
  * Handles the complete lifecycle of an HTTP request
@@ -88,7 +89,7 @@ export class RequestHandlerImpl {
    * The error handler returns a response object that we apply to the context
    */
   private async handleError(context: InternalContextImpl, error: unknown): Promise<void> {
-    console.error('Request handling error:', error);
+    log.error('Request handling error', error);
 
     try {
       // Get the error handler (user-defined or default)
@@ -111,7 +112,7 @@ export class RequestHandlerImpl {
       });
     } catch (errorHandlerError) {
       // If the error handler itself fails, fall back to basic response
-      console.error('Error handler failed:', errorHandlerError);
+      log.error('Error handler failed', errorHandlerError);
 
       context.response.setStatusCode(500);
       context._response._setBody({
