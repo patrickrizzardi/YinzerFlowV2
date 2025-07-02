@@ -38,6 +38,20 @@ const server = new YinzerFlow({
 await server.listen();
 ```
 
+Users can also use the built in logger as well by importing the log directly from yinzerflow
+```typescript
+import { YinzerFlow, log } from 'yinzerflow';
+
+const server = new YinzerFlow({
+  logLevel: 'info',
+  networkLogs: true
+});
+
+log.info('The server is starting')
+
+await server.listen();
+```
+
 ### Custom Logger Example
 ```typescript
 import { YinzerFlow } from 'yinzerflow';

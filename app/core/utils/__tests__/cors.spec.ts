@@ -145,7 +145,7 @@ describe('CORS Functionality', () => {
 
         const result = handleCors(context, config);
 
-        expect(result).toBe(false); // preflightContinue is false
+        expect(result).toBe(true); // preflightContinue is false, CORS handled it
         expect(context._response._statusCode).toBe(200);
         expect(context._response._body).toBe('');
 
@@ -182,24 +182,24 @@ describe('CORS Functionality', () => {
     });
 
     describe('Preflight Continue Behavior', () => {
-      it('should set empty body and return false when preflightContinue is false', () => {
+      it('should set empty body and return true when preflightContinue is false', () => {
         const config = createCorsConfig({ preflightContinue: false });
         const context = createTestContext('OPTIONS');
 
         const result = handleCors(context, config);
 
-        expect(result).toBe(false);
+        expect(result).toBe(true); // CORS handled it
         expect(context._response._body).toBe('');
       });
 
-      it('should not set body and return true when preflightContinue is true', () => {
+      it('should not set body and return false when preflightContinue is true', () => {
         const config = createCorsConfig({ preflightContinue: true });
         const context = createTestContext('OPTIONS');
 
         const result = handleCors(context, config);
 
-        expect(result).toBe(true);
-        expect(context._response._body).toBe(''); // Body should remain as default (empty string)
+        expect(result).toBe(false); // CORS did not handle, let next handler run
+        expect(context._response._body).toBe(''); // Should remain default empty string
       });
     });
 
@@ -486,7 +486,7 @@ describe('CORS Functionality', () => {
         origin: 'https://trusted.com',
       });
       const authorizedResult = handleCors(authorizedContext, config);
-      expect(authorizedResult).toBe(false); // OPTIONS handled
+      expect(authorizedResult).toBe(true); // CORS handled it
       expect(authorizedContext._response._statusCode).toBe(204);
 
       // Test unauthorized origin
@@ -494,7 +494,7 @@ describe('CORS Functionality', () => {
         origin: 'https://malicious.com',
       });
       const unauthorizedResult = handleCors(unauthorizedContext, config);
-      expect(unauthorizedResult).toBe(true); // Returns true because CORS handled the rejection
+      expect(unauthorizedResult).toBe(true); // CORS handled rejection
       expect(unauthorizedContext._response._statusCode).toBe(403);
     });
 
@@ -583,7 +583,7 @@ describe('CORS Functionality', () => {
 
       const result = handleCors(context, config);
 
-      expect(result).toBe(false);
+      expect(result).toBe(true); // CORS handled it
       expect(context._response._statusCode).toBe(200);
       expect(context._response._body).toBe('');
 
@@ -629,7 +629,7 @@ describe('CORS Functionality', () => {
 
         const result = handleCors(context, config);
 
-        expect(result).toBe(false);
+        expect(result).toBe(true); // CORS handled it
         expect(context._response._headers['Access-Control-Allow-Origin']).toBe('https://example.com');
       }
     });

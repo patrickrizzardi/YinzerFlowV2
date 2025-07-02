@@ -557,15 +557,8 @@ describe('RequestHandler', () => {
 
         await requestHandler.handle(context);
 
-        // Current implementation: CORS processes preflight but returns false with preflightContinue: false,
-        // causing RequestHandler to continue to route matching. Since no OPTIONS route exists for /api/data,
-        // it returns 404, overwriting the CORS response.
-        // This appears to be a bug in the RequestHandler CORS integration.
-        expect(context._response._statusCode).toBe(404);
-        expect(context._response._body).toEqual({
-          success: false,
-          message: '404 Not Found',
-        });
+        expect(context._response._statusCode).toBe(200);
+        expect(context._response._body).toEqual('');
       });
 
       it('should reject CORS preflight from unauthorized origins', async () => {
@@ -634,7 +627,7 @@ describe('RequestHandler', () => {
         expect(context._response._statusCode).toBe(204); // optionsSuccessStatus
         expect(context._response._headers['Access-Control-Allow-Origin']).toBe('*');
         expect(context._response._headers['Access-Control-Allow-Methods']).toBe('GET, POST');
-        expect(context._response._body).toBe(''); // CORS doesn't set body for preflightContinue: true
+        expect(context._response._body).toEqual({ message: 'Options route' });
       });
     });
 
@@ -704,7 +697,7 @@ describe('RequestHandler', () => {
         ctx.response.addHeaders({ 'x-before': 'true' });
       };
 
-      const routeHandler: HandlerCallback = (ctx) => {
+      const routeHandler: HandlerCallback = (_) => {
         executionLog.push('route');
         return {
           message: 'Complete workflow',
@@ -772,18 +765,13 @@ describe('RequestHandler', () => {
       // Test CORS preflight
       const preflightContext = new ContextImpl(createOptionsRequest('/api/data', { 'Access-Control-Request-Method': 'GET' }), setup) as InternalContextImpl;
       await requestHandler.handle(preflightContext);
-      // With preflightContinue: false, CORS processes preflight but returns false,
-      // causing RequestHandler to continue to route matching and return 404
-      expect(preflightContext._response._statusCode).toBe(404);
-      expect(preflightContext._response._body).toEqual({
-        success: false,
-        message: '404 Not Found',
-      });
+      expect(preflightContext._response._statusCode).toBe(204);
+      expect(preflightContext._response._body).toEqual('');
 
       // Test regular OPTIONS route
       const optionsContext = new ContextImpl(createOptionsRequest('/api/info'), setup) as InternalContextImpl;
       await requestHandler.handle(optionsContext);
-      expect(optionsContext._response._body).toEqual({ methods: ['GET', 'POST'] });
+      expect(optionsContext._response._body).toEqual('');
     });
   });
 });

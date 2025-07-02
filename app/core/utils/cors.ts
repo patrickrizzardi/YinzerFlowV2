@@ -36,12 +36,13 @@ export const handleCors = (context: InternalContextImpl, config: CorsConfigurati
       [httpHeaders.accessControlMaxAge]: config.maxAge.toString(),
     });
 
-    // If preflightContinue is false, return false means it will continue to the next handler
-    if (config.preflightContinue) return false;
-
-    // Set body to empty string if preflightContinue is true
+    if (config.preflightContinue) {
+      // Don't set body, let next handler run
+      return false; // CORS did not handle, let next handler run
+    }
+    // Only set body if preflightContinue is false
     context._response._setBody('');
-    return true;
+    return true; // CORS handled it
   }
 
   // For non-OPTIONS requests, still validate origin and set appropriate headers

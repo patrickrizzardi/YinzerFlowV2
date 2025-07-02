@@ -14,7 +14,7 @@ import dts from 'bun-plugin-dts';
 
 // Configuration
 const BUILD_CONFIG = {
-  entrypoints: ['./app/core/YinzerFlow.ts'],
+  entrypoints: ['./app/index.ts'],
   outdir: './lib',
   target: 'node' as const,
   minify: true,
@@ -103,7 +103,7 @@ const buildMainLibrary = async (): Promise<void> => {
 
 const validateBundleSize = (): number => {
   console.log('📏 Validating bundle size...');
-  const { size } = Bun.file('lib/YinzerFlow.js');
+  const { size } = Bun.file('lib/index.js');
   const sizeKB = Math.round(size / 1024);
   const maxSizeKB = Math.round(BUILD_CONFIG.maxBundleSize / 1024);
 
@@ -139,7 +139,7 @@ const buildProduction = async (): Promise<void> => {
     // Success summary
     const duration = Date.now() - startTime;
     console.log(`\n🎉 Production build completed successfully in ${duration}ms!`);
-    console.log(`📦 Output: ./lib/YinzerFlow.js (${sizeKB}KB)`);
+    console.log(`📦 Output: ./lib/index.js (${sizeKB}KB)`);
   } catch (error: unknown) {
     console.error('\n❌ Production build failed:');
     if (error instanceof Error) {

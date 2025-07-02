@@ -1,6 +1,6 @@
 {
   "name": "yinzerflow",
-  "version": "0.2.1",
+  "version": "0.2.5",
   "author": "Patrick Rizzardi <patrick@redact.digital> (https://redact.digital)",
   "license": "MIT",
   "homepage": "https://github.com/yinzers/YinzerFlow.git",
@@ -22,8 +22,8 @@
     "bun",
     "yinzerflow"
   ],
-  "types": "YinzerFlow.d.ts",
-  "main": "YinzerFlow.js",
+  "types": "index.d.ts",
+  "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "bun test --watch --coverage",

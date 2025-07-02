@@ -17,7 +17,7 @@ import dts from 'bun-plugin-dts';
 
 // Build configuration - optimized for development with readable stack traces
 const BUILD_CONFIG = {
-  entrypoints: ['./app/core/YinzerFlow.ts'],
+  entrypoints: ['./app/index.ts'],
   outdir: './lib',
   target: 'node' as const,
   minify: false, // Disabled for readable stack traces during development
