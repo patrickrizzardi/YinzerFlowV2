@@ -5,8 +5,6 @@ services:
     working_dir: /app
     volumes:
       - ./:/app
-    ports:
-      - "5000:5000"
     command: sh -c 'bun install && bun build:watch'
     tty: true
     stdin_open: true
@@ -21,15 +19,6 @@ services:
     volumes:
       - ./:/usr/src/app
       - /home/patrick/.npmrc:/home/node/.npmrc
-
-  benchmark:
-    image: williamyeh/wrk
-    restart: no
-    command: ["-t20", "-c400", "-d10s", "http://api:5000/status"]
-    depends_on:
-      - app
-    networks:
-      - yinzerflow-network
 
 networks:
   yinzerflow-network:

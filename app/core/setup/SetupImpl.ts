@@ -20,7 +20,7 @@ export class SetupImpl implements InternalSetupImpl {
   }
 
   //   ===== Route Registration =====
-  get(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
+  get(path: string, handler: HandlerCallback<any>, options?: InternalRouteRegistryOptions): void {
     const routeOptions = options ?? { beforeHooks: [], afterHooks: [] };
     // Register GET route
     this._routeRegistry._register({ method: httpMethod.get, handler, path, options: routeOptions, params: {} });
@@ -28,27 +28,27 @@ export class SetupImpl implements InternalSetupImpl {
     this._routeRegistry._register({ method: httpMethod.head, handler, path, options: routeOptions, params: {} });
   }
 
-  head(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
+  head(path: string, handler: HandlerCallback<any>, options?: InternalRouteRegistryOptions): void {
     this._routeRegistry._register({ method: httpMethod.head, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
-  post(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
+  post(path: string, handler: HandlerCallback<any>, options?: InternalRouteRegistryOptions): void {
     this._routeRegistry._register({ method: httpMethod.post, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
-  put(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
+  put(path: string, handler: HandlerCallback<any>, options?: InternalRouteRegistryOptions): void {
     this._routeRegistry._register({ method: httpMethod.put, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
-  patch(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
+  patch(path: string, handler: HandlerCallback<any>, options?: InternalRouteRegistryOptions): void {
     this._routeRegistry._register({ method: httpMethod.patch, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
-  delete(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
+  delete(path: string, handler: HandlerCallback<any>, options?: InternalRouteRegistryOptions): void {
     this._routeRegistry._register({ method: httpMethod.delete, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
-  options(path: string, handler: HandlerCallback, options?: InternalRouteRegistryOptions): void {
+  options(path: string, handler: HandlerCallback<any>, options?: InternalRouteRegistryOptions): void {
     this._routeRegistry._register({ method: httpMethod.options, handler, path, options: options ?? { beforeHooks: [], afterHooks: [] }, params: {} });
   }
 
@@ -59,7 +59,7 @@ export class SetupImpl implements InternalSetupImpl {
   ): void {
     const createRouteHandler =
       (method: InternalHttpMethod) =>
-      (path: string, handler: HandlerCallback, routeOptions?: InternalRouteRegistryOptions): void => {
+      (path: string, handler: HandlerCallback<any>, routeOptions?: InternalRouteRegistryOptions): void => {
         const fullPath = `${prefix}${path}`;
         const mergedOptions = {
           beforeHooks: [...(options?.beforeHooks ?? []), ...(routeOptions?.beforeHooks ?? [])],
