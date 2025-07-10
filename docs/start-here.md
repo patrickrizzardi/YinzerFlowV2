@@ -76,23 +76,31 @@ app.post('/api/users', ({ request }) => {
 await app.listen();
 ```
 
-### Graceful Shutdown Example
+### Graceful Shutdown
+
+YinzerFlow automatically handles graceful shutdown for SIGTERM and SIGINT signals. No manual setup required:
 
 ```typescript
 import { YinzerFlow } from 'yinzerflow';
 
 const app = new YinzerFlow({ port: 3000 });
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  await app.close();
-  console.log('Server shut down gracefully');
-  process.exit(0);
+// Add your routes
+app.get('/hello', () => {
+  return { message: 'Hello, World!' };
 });
 
+// Start the server - graceful shutdown is automatically configured
 await app.listen();
 ```
+
+**That's it!** YinzerFlow will automatically:
+- Listen for SIGTERM and SIGINT signals
+- Log the shutdown process with Pittsburgh personality
+- Close the server gracefully
+- Exit the process cleanly
+
+For custom shutdown handling, see [Advanced Configuration](./advanced-configuration-options.md).
 
 ## Documentation Overview
 

@@ -4,7 +4,7 @@ import dts from 'bun-plugin-dts';
 
 /**
  * Production Build Script for YinzerFlow
- * 
+ *
  * This script:
  * 1. Runs quality checks (linting, testing, unused packages)
  * 2. Builds the main library with TypeScript definitions
@@ -50,7 +50,14 @@ const copyFiles = (): void => {
     try {
       if (type === 'directory') {
         if (!existsSync(dest)) execSync(`mkdir -p ${dest}`);
-        execSync(`cp -R ${src}/* ${dest}/`);
+        // Copy directory contents and remove unwanted files
+        execSync(`cp -R ${src}/* ${dest}/ 2>/dev/null || true`);
+        // Remove excluded files/directories
+        try {
+          execSync(`rm -rf ${dest}/node_modules ${dest}/bun.lock ${dest}/storage ${dest}/.gitignore`);
+        } catch (_) {
+          // Some files might not exist, that's fine
+        }
       } else {
         execSync(`cp ${src} ${dest}`);
       }

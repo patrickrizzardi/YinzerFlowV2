@@ -77,6 +77,7 @@ const DEFAULT_CONFIGURATION: InternalServerConfiguration = {
     keepAliveTimeout: 65000,
     headersTimeout: 66000,
   },
+  autoGracefulShutdown: true, // Enabled by default
 };
 
 /**

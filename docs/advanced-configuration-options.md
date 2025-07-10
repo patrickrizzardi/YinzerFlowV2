@@ -90,6 +90,122 @@ const app = new YinzerFlow({
 | `keepAliveTimeout` | `number` | `65000` | Keep-alive timeout |
 | `headersTimeout` | `number` | `66000` | Headers timeout (should be > keep-alive) |
 
+### Graceful Shutdown Configuration
+
+Control automatic graceful shutdown behavior:
+
+```typescript
+const app = new YinzerFlow({
+  port: 3000,
+  autoGracefulShutdown: true, // Enable automatic signal handling (default)
+});
+```
+
+| Option | Type | Default | Description |
+|-----|---|---|---|
+| `autoGracefulShutdown` | `boolean` | `true` | Enable automatic SIGTERM/SIGINT handling |
+
+**When enabled (default):**
+- Automatically sets up SIGTERM and SIGINT signal handlers
+- Logs shutdown process with Pittsburgh personality
+- Calls `app.close()` and `process.exit(0)` automatically
+- Prevents duplicate handlers when multiple instances are created
+
+**When disabled:**
+- No automatic signal handling
+- Manual graceful shutdown setup required
+- Useful for custom shutdown logic or integration with process managers
+
+### Custom Graceful Shutdown Example
+
+When `autoGracefulShutdown: false`, you can implement custom shutdown logic:
+
+```typescript
+import { YinzerFlow } from 'yinzerflow';
+
+const app = new YinzerFlow({
+  port: 3000,
+  autoGracefulShutdown: false, // Disable automatic handling
+});
+
+// Custom shutdown with additional cleanup
+const gracefulShutdown = async (signal: string) => {
+  console.log(`🛑 Received ${signal}, starting custom shutdown...`);
+  
+  // Custom cleanup logic
+  await cleanupDatabase();
+  await saveApplicationState();
+  
+  // Close the server
+  await app.close();
+  
+  console.log('✅ Custom shutdown completed');
+  process.exit(0);
+};
+
+// Set up custom signal handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+await app.listen();
+```
+
+### Advanced Custom Shutdown Example
+
+For complex applications with multiple cleanup steps:
+
+```typescript
+import { YinzerFlow } from 'yinzerflow';
+
+const app = new YinzerFlow({
+  port: 3000,
+  autoGracefulShutdown: false,
+});
+
+let isShuttingDown = false;
+
+const advancedShutdown = async (signal: string) => {
+  if (isShuttingDown) {
+    console.log('⚠️ Shutdown already in progress, ignoring signal');
+    return;
+  }
+  
+  isShuttingDown = true;
+  console.log(`🛑 Received ${signal}, starting advanced shutdown...`);
+  
+  try {
+    // Phase 1: Stop accepting new requests
+    console.log('📝 Phase 1: Stopping new requests...');
+    // Your logic here
+    
+    // Phase 2: Complete in-flight requests
+    console.log('📝 Phase 2: Completing in-flight requests...');
+    await waitForInFlightRequests();
+    
+    // Phase 3: Cleanup resources
+    console.log('📝 Phase 3: Cleaning up resources...');
+    await cleanupDatabase();
+    await closeFileHandles();
+    await flushLogs();
+    
+    // Phase 4: Close server
+    console.log('📝 Phase 4: Closing server...');
+    await app.close();
+    
+    console.log('✅ Advanced shutdown completed successfully');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Shutdown failed:', error);
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => advancedShutdown('SIGTERM'));
+process.on('SIGINT', () => advancedShutdown('SIGINT'));
+
+await app.listen();
+```
+
 ### Logging Configuration
 
 Control framework logging output with built-in Pittsburgh personality or custom logging libraries. See [Logging Documentation](./logging.md) for detailed setup, custom logger integration, and advanced use cases.

@@ -36,6 +36,11 @@ export class YinzerFlow extends SetupImpl {
       'YinzerFlow initialized with logging enabled',
       `${colors.green}level: ${this._configuration.logLevel}, networkLogs: ${this._configuration.networkLogs}${colors.reset}`,
     );
+
+    // Setup automatic graceful shutdown if enabled
+    if (this._configuration.autoGracefulShutdown) {
+      this._setupGracefulShutdown();
+    }
   }
 
   /**
@@ -170,5 +175,29 @@ export class YinzerFlow extends SetupImpl {
       port: this._configuration.port,
       host: this._configuration.host,
     };
+  }
+
+  /**
+   * Setup automatic graceful shutdown handlers
+   */
+  private _setupGracefulShutdown(): void {
+    // Only setup if no handlers are already registered
+    if (process.listenerCount('SIGTERM') === 0 && process.listenerCount('SIGINT') === 0) {
+      const shutdown = (signal: string): void => {
+        log.info(`🛑 Received ${signal}, shutting down gracefully...`);
+        this.close()
+          .then(() => {
+            log.info('✅ Server shut down gracefully');
+            process.exit(0);
+          })
+          .catch((error) => {
+            log.error('❌ Error during graceful shutdown:', error);
+            process.exit(1);
+          });
+      };
+
+      process.on('SIGTERM', () => shutdown('SIGTERM'));
+      process.on('SIGINT', () => shutdown('SIGINT'));
+    }
   }
 }

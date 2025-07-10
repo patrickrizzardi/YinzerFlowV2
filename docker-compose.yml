@@ -5,6 +5,10 @@ services:
     working_dir: /app
     volumes:
       - ./:/app
+
+      # This is the example / test directory that is copied in the build.ts file
+      # so when the app builds it includes the example directory
+      - ../yinzerflow-testing:/app/example
     command: sh -c 'bun install && bun build:watch'
     tty: true
     stdin_open: true
@@ -15,9 +19,9 @@ services:
     user: node
     image: node:latest
     restart: no
-    working_dir: /usr/src/app
+    working_dir: /app
     volumes:
-      - ./:/usr/src/app
+      - ./:/app
       - /home/patrick/.npmrc:/home/node/.npmrc
 
 networks:

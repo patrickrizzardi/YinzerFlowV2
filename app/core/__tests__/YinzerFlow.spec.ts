@@ -138,6 +138,67 @@ describe('YinzerFlow', () => {
     });
   });
 
+  describe('Graceful Shutdown', () => {
+    describe('Auto Graceful Shutdown Configuration', () => {
+      it('should enable auto graceful shutdown by default', () => {
+        app = new YinzerFlow();
+        // Check that signal handlers are set up (indirectly by checking if they exist)
+        expect(process.listenerCount('SIGTERM')).toBeGreaterThan(0);
+        expect(process.listenerCount('SIGINT')).toBeGreaterThan(0);
+      });
+
+      it('should disable auto graceful shutdown when configured', () => {
+        const originalSigtermCount = process.listenerCount('SIGTERM');
+        const originalSigintCount = process.listenerCount('SIGINT');
+
+        app = new YinzerFlow({ autoGracefulShutdown: false });
+
+        // Should not add additional handlers
+        expect(process.listenerCount('SIGTERM')).toBe(originalSigtermCount);
+        expect(process.listenerCount('SIGINT')).toBe(originalSigintCount);
+      });
+
+      it('should not duplicate signal handlers when multiple instances are created', () => {
+        const originalSigtermCount = process.listenerCount('SIGTERM');
+        const originalSigintCount = process.listenerCount('SIGINT');
+
+        // Create multiple instances
+        /* eslint-disable  no-new*/
+        new YinzerFlow();
+        new YinzerFlow();
+        new YinzerFlow();
+        /* eslint-enable */
+
+        // Should not add duplicate handlers
+        expect(process.listenerCount('SIGTERM')).toBe(originalSigtermCount);
+        expect(process.listenerCount('SIGINT')).toBe(originalSigintCount);
+      });
+    });
+
+    describe('Manual Graceful Shutdown', () => {
+      it('should handle manual graceful shutdown correctly', async () => {
+        app = new YinzerFlow({ autoGracefulShutdown: false });
+
+        await app.listen();
+        expect(app.status().isListening).toBe(true);
+
+        await app.close();
+        expect(app.status().isListening).toBe(false);
+      });
+
+      it('should handle multiple close calls gracefully', async () => {
+        app = new YinzerFlow({ autoGracefulShutdown: false });
+
+        await app.listen();
+        await app.close();
+
+        // Second close should not throw
+        await app.close();
+        expect(app.status().isListening).toBe(false);
+      });
+    });
+  });
+
   describe('Route Registration and Handling', () => {
     describe('Basic Route Handling', () => {
       it('should register and handle GET routes', async () => {

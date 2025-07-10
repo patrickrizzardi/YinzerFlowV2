@@ -401,4 +401,11 @@ export interface InternalServerConfiguration {
    * Server connection options
    */
   connectionOptions: InternalConnectionOptions;
+
+  /**
+   * Automatic graceful shutdown configuration
+   * When enabled, YinzerFlow automatically sets up signal handlers for SIGTERM and SIGINT
+   * @default true
+   */
+  autoGracefulShutdown: boolean;
 }
