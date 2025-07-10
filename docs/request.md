@@ -36,7 +36,9 @@ YinzerFlow's request parsing includes built-in security limits that are automati
 
 These limits are built into the framework and cannot be disabled, ensuring consistent security across all YinzerFlow applications.
 
-## Basic Example
+## Examples
+
+### Basic Example
 
 ```typescript
 import { YinzerFlow } from 'yinzerflow';
@@ -56,6 +58,9 @@ app.post('/api/users/:id', ({ request }) => {
   
   // Access request body
   const userData = request.body;
+  
+  // Access raw body for manual parsing when needed
+  const rawBody = request.rawBody;
 
   const clientIp = request.ipAddress
   
@@ -68,7 +73,67 @@ app.post('/api/users/:id', ({ request }) => {
     receivedData: userData
   };
 });
-  ```
+```
+
+### Body Parsing Example
+
+YinzerFlow automatically parses request bodies (JSON, file uploads, forms) with built-in security protections. Parsed data is available on `request.body` - see [Body Parsing Documentation](./body-parsing.md) for detailed configuration options, examples, and security considerations.
+
+```typescript
+app.post('/api/users', ({ request, response }) => {
+  // Body is automatically parsed based on Content-Type
+  const userData = request.body;
+  
+  return {
+    message: 'User created successfully',
+    data: userData
+  };
+});
+```
+
+### Raw Body Access Example
+
+For advanced use cases where you need to manually parse the request body, YinzerFlow provides access to the raw body via `request.rawBody`. This is useful when:
+
+- You need to implement custom parsing logic
+- You want to validate the raw body before parsing
+- You're working with unsupported content types
+- You need to implement custom security validations
+
+```typescript
+app.post('/api/custom-parser', ({ request }) => {
+  // Access the raw body as string or Buffer
+  const rawBody = request.rawBody;
+  
+  // Implement custom parsing logic
+  if (typeof rawBody === 'string') {
+    // Custom string parsing
+    const customData = parseCustomFormat(rawBody);
+    return { parsed: customData };
+  } else if (Buffer.isBuffer(rawBody)) {
+    // Custom binary parsing
+    const binaryData = parseBinaryFormat(rawBody);
+    return { parsed: binaryData };
+  }
+  
+  return { error: 'Unsupported body format' };
+});
+
+// Example: Custom XML parser
+app.post('/api/xml', ({ request }) => {
+  const rawBody = request.rawBody;
+  
+  if (typeof rawBody === 'string') {
+    // Parse XML manually
+    const xmlData = parseXML(rawBody);
+    return { xml: xmlData };
+  }
+  
+  return { error: 'Expected string body for XML' };
+});
+```
+
+**Note**: The `rawBody` property contains the unprocessed request body as either a `string` or `Buffer`, depending on the content type and framework processing. Always validate and sanitize raw body data before processing to prevent security vulnerabilities.
 
 ## Common Use Cases
 
@@ -125,21 +190,5 @@ YinzerFlow implements several security measures to prevent common request-based 
 ### 🛡️ IP Address Validation
 - **Problem**: Spoofed proxy headers can bypass IP-based security controls
 - **YinzerFlow Solution**: Secure IP address extraction with proxy header validation prevents spoofing attacks
-
-## Body Parsing
-
-YinzerFlow automatically parses request bodies (JSON, file uploads, forms) with built-in security protections. Parsed data is available on `request.body` - see [Body Parsing Documentation](./body-parsing.md) for detailed configuration options, examples, and security considerations.
-
-```typescript
-app.post('/api/users', ({ request, response }) => {
-  // Body is automatically parsed based on Content-Type
-  const userData = request.body;
-  
-  return {
-    message: 'User created successfully',
-    data: userData
-  };
-});
-```
 
 These security measures ensure YinzerFlow's request implementation follows security best practices and prevents common attack vectors while maintaining RFC compliance and performance. 
